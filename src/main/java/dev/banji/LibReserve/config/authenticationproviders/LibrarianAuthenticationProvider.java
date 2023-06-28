@@ -1,4 +1,5 @@
 package dev.banji.LibReserve.config.authenticationprovider;
+package dev.banji.LibReserve.config.authenticationproviders;
 
 import dev.banji.LibReserve.config.filters.tokens.LibrarianAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;

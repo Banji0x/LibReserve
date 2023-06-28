@@ -1,4 +1,4 @@
-package dev.banji.LibReserve.config.filters.tokens;
+package dev.banji.LibReserve.config.tokens;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -12,16 +12,16 @@ public class LibrarianAuthenticationToken extends AbstractAuthenticationToken {
 
     private LibrarianAuthenticationToken(Object principal, Object credentials, Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
+        setAuthenticated(true); //override
         this.principal = principal;
         this.credentials = credentials;
-        super.setAuthenticated(true); // must use super, as we override
     }
 
     private LibrarianAuthenticationToken(Object principal, Object credentials) {
         super(null);
         this.principal = principal;
         this.credentials = credentials;
-        setAuthenticated(false);
+        setAuthenticated(false);//override
     }
 
     public static LibrarianAuthenticationToken authenticated(Object principal, Object credentials, Collection<? extends GrantedAuthority> authorities) {
