@@ -4,30 +4,38 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@SuppressWarnings("JpaObjectClassSignatureInspection") // to disable IDE warnings for a PUBLIC No-Args Constructor.
+import static lombok.AccessLevel.PRIVATE;
+
+@Entity
 @Getter
 @Setter
-@ToString
-@Entity
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class Librarian {
+@NoArgsConstructor(access = PRIVATE)
+public class Librarian extends User {
     @Id
     @GeneratedValue
     private Long id;
-    private String firstName;
-    private String middleName;
-    private String lastName;
-    private String gender;
     @Column(unique = true, nullable = false)
-    private String phoneNumber;
-    @Column(unique = true, nullable = false)
-    private String emailAddress;
-    private String lga;
-    private String state;
-    private String country;
-    @Column(unique = true, nullable = false)
-    private String staffNumber; //since it's a university system, each staff has a unique generated number
-    private String password;
+    private String staffNumber; //since it's a university system, each staff has a unique generated number, so it being null is impossible
+
+    public Librarian(String firstName, String middleName, String lastName, String gender,
+                     String phoneNumber, String emailAddress, String lga,
+                     String state, String country, Account account, String staffNumber, String password) {
+        this.firstName = firstName;
+        this.middleName = middleName;
+        this.lastName = lastName;
+        this.gender = gender;
+        this.phoneNumber = phoneNumber;
+        this.emailAddress = emailAddress;
+        this.lga = lga;
+        this.state = state;
+        this.country = country;
+        this.account = account;
+        this.staffNumber = staffNumber;
+        this.password = password;
+    }
+
 }
