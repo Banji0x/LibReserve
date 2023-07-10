@@ -1,9 +1,10 @@
 package dev.banji.LibReserve.exceptions;
 
 import lombok.Getter;
+import org.springframework.security.core.AuthenticationException;
 
 @Getter
-public class UserNotFoundException extends RuntimeException {
+public class UserNotFoundException extends AuthenticationException {
     private UserNotFoundException(String message) {
         super(message);
     }
