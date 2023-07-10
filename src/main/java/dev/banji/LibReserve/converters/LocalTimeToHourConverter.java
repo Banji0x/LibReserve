@@ -6,14 +6,14 @@ import jakarta.persistence.Converter;
 import java.time.LocalTime;
 
 @Converter
-public class LocalTimeToHourConverter implements AttributeConverter<LocalTime, Integer> {
+public class LocalTimeToHourConverter implements AttributeConverter<String, Integer> {
     @Override
-    public Integer convertToDatabaseColumn(LocalTime time) {
-        return time.getHour();
+    public Integer convertToDatabaseColumn(String attribute) {
+        return LocalTime.parse(attribute).getHour();
     }
 
     @Override
-    public LocalTime convertToEntityAttribute(Integer hour) {
-        return LocalTime.of(hour,0);
+    public String convertToEntityAttribute(Integer hour) {
+        return LocalTime.of(hour, 0).toString();
     }
 }
