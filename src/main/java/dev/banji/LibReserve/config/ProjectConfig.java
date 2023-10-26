@@ -33,6 +33,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 @Configuration
@@ -68,8 +69,8 @@ public class ProjectConfig {
     @Bean
     public UserDetailsService studentUserDetailsService(StudentRepository studentRepository) {
         return (matricNumber) -> {
-            var user = studentRepository.findByMatricNumber(matricNumber.trim().toLowerCase()); //first check if student already exists in database, if he is not a new user...
-            return user.map(StudentSecurityDetails::new).orElse(null);
+            var user = studentRepository.findByMatricNumber(matricNumber.trim().toLowerCase());
+            return user.map(StudentSecurityDetails::new).orElseThrow(UserNotFoundException::StudentNotFoundException);
         };
     }
 
