@@ -33,6 +33,10 @@ public class StudentSecurityDetails implements UserDetails {
         return student.getFirstName() + " " + student.getLastName();
     }
 
+    public String getMatricNumber() {
+        return student.getMatricNumber();
+    }
+
     @Override
     public boolean isAccountNonExpired() {
         return true;
