@@ -7,22 +7,23 @@ import dev.banji.LibReserve.config.tokens.StudentAuthenticationToken;
 import dev.banji.LibReserve.config.userDetails.LibrarianSecurityDetails;
 import dev.banji.LibReserve.config.userDetails.StudentSecurityDetails;
 import dev.banji.LibReserve.exceptions.UserNotFoundException;
-import dev.banji.LibReserve.model.Account;
 import dev.banji.LibReserve.model.Librarian;
-import dev.banji.LibReserve.model.Student;
 import dev.banji.LibReserve.model.dtos.LibrarianLoginDetailsDto;
 import dev.banji.LibReserve.model.dtos.StudentLoginDetailsDto;
 import dev.banji.LibReserve.repository.LibrarianRepository;
 import dev.banji.LibReserve.repository.StudentRepository;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -36,6 +37,13 @@ import java.util.List;
 
 @Configuration
 public class ProjectConfig {
+    @Value("${library.properties.numberOfSeats}")
+    private Long numberOfSeats;
+    @Value("${library.properties.readTimeoutInSeconds}")
+    private Long readTimeoutInSeconds;
+    @Value("${library.properties.connectTimeoutInSeconds}")
+    private Long connectTimeoutInSeconds;
+
     //Request Matchers
     @Bean
     RequestMatcher librarianJwtTokenPathRequestMatcher() { //this request matcher is for token generation service
@@ -63,6 +71,18 @@ public class ProjectConfig {
             var user = studentRepository.findByMatricNumber(matricNumber.trim().toLowerCase()); //first check if student already exists in database, if he is not a new user...
             return user.map(StudentSecurityDetails::new).orElse(null);
         };
+    }
+
+    @Bean
+    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
+    List<Jwt> blackListedJwtTokenList() {
+        return new ArrayList<>();
+    }
+
+    @Bean
+    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
+    LinkedList<String> libraryWaitingQueue() {
+        return new LinkedList<>(); //holds the matric number of the students...
     }
 
     //Authentication converters
