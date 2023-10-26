@@ -1,6 +1,6 @@
 package dev.banji.LibReserve.model.enums;
 
-public enum Dept {
+public enum Department {
     HA,
     HL,
     HP,
