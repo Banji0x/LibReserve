@@ -1,6 +1,7 @@
 package dev.banji.LibReserve.config.authenticationproviders;
 
 import dev.banji.LibReserve.config.tokens.StudentAuthenticationToken;
+import dev.banji.LibReserve.exceptions.UserNotFoundException;
 import dev.banji.LibReserve.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -48,29 +49,24 @@ public class StudentAuthenticationProvider implements AuthenticationProvider {
             throw new BadCredentialsException("Bad Credentials");
         var matricNumber = (String) studentAuthenticationToken.getPrincipal();
         var rawCredentials = (String) studentAuthenticationToken.getCredentials();
-        var studentDetails = studentUserDetailsService.loadUserByUsername(matricNumber);
-        if (studentDetails == null) {
-            //call external api to verify student
-            //if valid create the student in the database
-            //else throw exception
-            //return an authenticatedStudentToken...
+        try {
+            //check if student is a registered user...
+            var studentDetails = studentUserDetailsService.loadUserByUsername(matricNumber);
+            if (!passwordEncoder.matches(rawCredentials, studentDetails.getPassword()))
+                throw new BadCredentialsException("Credentials do not match.");
+            if (!studentDetails.isEnabled()) throw new DisabledException("Account is disabled.");
+            if (!studentDetails.isAccountNonLocked()) throw new LockedException("Account is locked.");
+            return StudentAuthenticationToken.authenticatedToken(studentDetails, studentDetails.getAuthorities());
+        } catch (UserNotFoundException studentNotFoundException) {
             ResponseEntity<String> responseEntity = postRequest(restTemplate, matricNumber, rawCredentials);
-            if (!responseEntity.getStatusCode().is2xxSuccessful())
-                throw new BadCredentialsException("Bad Credentials");
+            if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+                throw new BadCredentialsException("Bad Credentials");  // this should be improved,
+            }
+            // the authentication can't just be dependent on the HttpStatus...
             String body = responseEntity.getBody();
             //create a new Student from this...
 //            studentRepository.save();  //save student to repository...
-            return StudentAuthenticationToken.authenticatedToken("", "",
-                    List.of(() -> "ROLE_STUDENT")
-            );
-        } else {
-            if (!passwordEncoder.matches(rawCredentials, studentDetails.getPassword()))
-                throw new BadCredentialsException("Credentials do not match.");
-            if (!studentDetails.isEnabled())
-                throw new DisabledException("Account is disabled.");
-            if (!studentDetails.isAccountNonLocked())
-                throw new LockedException("Account is locked.");
-            return StudentAuthenticationToken.authenticatedToken(studentDetails.getUsername(), studentDetails.getPassword(), studentDetails.getAuthorities());
+            return StudentAuthenticationToken.authenticatedToken("", List.of(() -> "ROLE_STUDENT"));
         }
     }
 
