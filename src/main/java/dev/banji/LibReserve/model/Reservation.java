@@ -1,39 +1,89 @@
 package dev.banji.LibReserve.model;
 
-import dev.banji.LibReserve.converters.LocalTimeToHourConverter;
-import jakarta.persistence.*;
+import dev.banji.LibReserve.model.enums.ReservationStatus;
+import jakarta.persistence.Column;
+import jakarta.persistence.MappedSuperclass;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Date;
 
+/**
+ * An abstract class representing a reservation in a library.
+ */
+@MappedSuperclass
 @Getter
 @Setter
-@ToString
-@Entity
-public class Reservation {
-    @Id
-    @GeneratedValue
-    private Long id; //primary key
-    //dates
-    @Temporal(value = TemporalType.DATE)
+public abstract class Reservation {
+
+    /**
+     * The precise time the student checked in.
+     */
     @Column(updatable = false, nullable = false)
-    private Date reservationDate;
-    @Temporal(value = TemporalType.DATE)
-    @Column(updatable = false)
-    private Date checkOutTime;
-    @Temporal(value = TemporalType.DATE)
-    @Column(updatable = false)
-    private Date checkInTime;
-    @Convert(converter = LocalTimeToHourConverter.class)
+    protected LocalTime checkInTime;
+
+    /**
+     * The seat number that was allocated.
+     */
     @Column(updatable = false, nullable = false)
-    private LocalTime hoursReserved;
-    //
-    private Boolean checkedIn;
-    private Boolean expired;
+    protected long seatNumber;
+
+    /**
+     * The intended duration of the library stay in minutes.
+     */
     @Column(updatable = false, nullable = false)
-    private String reservationCode;
-    private int overTime;
+    private Duration intendedStay;
+
+    /**
+     * The date the reservation was created.
+     */
+    @Column(updatable = false, nullable = false)
+    protected LocalDate reservationCreationDate;
+
+    /**
+     * The time the reservation was created.
+     */
+    @Column(updatable = false, nullable = false)
+    protected LocalTime reservationCreationTime;
+
+    /**
+     * The date the reservation was made for.
+     */
+    @Column(updatable = false, nullable = false)
+    protected LocalDate dateReservationWasMadeFor;
+
+    /**
+     * The time the reservation was made for.
+     */
+    @Column(updatable = false, nullable = false)
+    protected LocalTime timeReservationWasMadeFor;
+
+
+    /**
+     * The reservation status.
+     * For the librarian, this can only be "checked in" or "checked out".
+     */
+    protected ReservationStatus reservationStatus;
+
+    /**
+     * The checkout date and time.
+     */
+    protected LocalDateTime checkOutDateAndTime;
+
+    @Builder
+    public Reservation(LocalTime checkInTime, long seatNumber, Duration intendedStay, LocalDate reservationCreationDate, LocalTime reservationCreationTime, LocalDate dateReservationWasMadeFor, LocalTime timeReservationWasMadeFor, ReservationStatus reservationStatus, LocalDateTime checkOutDateAndTime) {
+        this.checkInTime = checkInTime;
+        this.seatNumber = seatNumber;
+        this.intendedStay = intendedStay;
+        this.reservationCreationDate = reservationCreationDate;
+        this.reservationCreationTime = reservationCreationTime;
+        this.dateReservationWasMadeFor = dateReservationWasMadeFor;
+        this.timeReservationWasMadeFor = timeReservationWasMadeFor;
+        this.reservationStatus = reservationStatus;
+        this.checkOutDateAndTime = checkOutDateAndTime;
+    }
 }
