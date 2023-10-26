@@ -19,12 +19,12 @@ import org.springframework.stereotype.Component;
 public class LibrarianAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
     private final AuthenticationConverter librarianAuthConverter;
 
-    public LibrarianAuthenticationFilter(RequestMatcher librarianPathRequestMatcher,
+    public LibrarianAuthenticationFilter(RequestMatcher librarianJwtTokenPathRequestMatcher,
                                          AuthenticationConverter librarianAuthConverter,
                                          AuthenticationManager providerManager,
                                          AuthenticationFailureHandler librarianAuthenticationFailureHandler,
                                          AuthenticationSuccessHandler librarianAuthenticationSuccessHandler) {
-        super(librarianPathRequestMatcher, providerManager);
+        super(librarianJwtTokenPathRequestMatcher, providerManager);
         this.librarianAuthConverter = librarianAuthConverter;
         this.setAuthenticationFailureHandler(librarianAuthenticationFailureHandler);
         this.setAuthenticationSuccessHandler(librarianAuthenticationSuccessHandler);
