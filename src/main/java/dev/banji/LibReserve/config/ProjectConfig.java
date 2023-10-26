@@ -136,13 +136,38 @@ public class ProjectConfig {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
-//    @Bean //this bean is required for the application.properties to function properly...
-//    public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
-//        var placeholderConfigurer = new PropertySourcesPlaceholderConfigurer();
-//        Resource[] resources = new ClassPathResource[]{new ClassPathResource(PROPERTY_FILENAME)};
-//        placeholderConfigurer.setLocations(resources);
-//        placeholderConfigurer.setIgnoreUnresolvablePlaceholders(true);
-//        return placeholderConfigurer;
+    //Command Line Runner
+//    @Bean
+//    CommandLineRunner commandLineRunner(LibrarianRepository librarianRepository, StudentRepository studentRepository, PasswordEncoder passwordEncoder) {
+//       return (args) -> {
+//            var librarian = new Librarian("librarian" +
+//                    "FirstName", "librarian" +
+//                    "MiddleName", "librarian" +
+//                    "LastName", "male", "+234814929303",
+//                    "librarianEmail@test.com", "testLga", "testState",
+//                    "testCountry", new Account(true, true), "1234567890", passwordEncoder.encode("test123"));
+//            var librarian1 = new Librarian("librarian" +
+//                    "FirstName", "librarian" +
+//                    "MiddleName", "librarian" +
+//                    "LastName", "male", "+23481143929303",
+//                    "librarian1Email@test.com", "testLga", "testState",
+//                    "testCountry", new Account(false, true), "123456890", passwordEncoder.encode("test123"));
+//            var librarian3 = new Librarian("librarian" +
+//                    "FirstName", "librarian" +
+//                    "MiddleName", "librarian" +
+//                    "LastName", "male", "+234819929303",
+//                    "librarian4Email@test.com", "testLga", "testState",
+//                    "testCountry", new Account(true, false), "134567890", passwordEncoder.encode("test123"));
+//            librarianRepository.saveAll(List.of(librarian, librarian1, librarian3));
+//
+//            Student student = new Student("student" +
+//                    "FirstName", "student" +
+//                    "MiddleName", "student" +
+//                    "LastName", "male", "+2348113929303",
+//                    "studentEmail@test.com", "testLga", "testState",
+//                    "testCountry", new Account(true, true), new ArrayList<>(), "01234567890", "234", "100", passwordEncoder.encode("test123"));
+//            studentRepository.save(student);
+//        };
 //    }
 }
 
