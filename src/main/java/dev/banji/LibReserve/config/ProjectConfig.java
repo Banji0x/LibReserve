@@ -59,6 +59,7 @@ public class ProjectConfig {
 
     @Bean
     public UserDetailsService studentUserDetailsService(StudentRepository studentRepository) {
+        //first check if student already exists as a user in the database...
         return (matricNumber) -> {
             var user = studentRepository.findByMatricNumber(matricNumber.trim().toLowerCase()); //first check if student already exists in database, if he is not a new user...
             return user.map(StudentSecurityDetails::new).orElse(null);
