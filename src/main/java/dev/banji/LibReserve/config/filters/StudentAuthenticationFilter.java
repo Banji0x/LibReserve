@@ -19,20 +19,12 @@ import org.springframework.stereotype.Component;
 public class StudentAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
     private final AuthenticationConverter studentAuthConverter;
 
-    public StudentAuthenticationFilter(RequestMatcher studentPathRequestMatcher, AuthenticationConverter studentAuthConverter, AuthenticationManager providerManager, AuthenticationFailureHandler studentAuthenticationFailureHandler, AuthenticationSuccessHandler studentAuthenticationSuccessHandler) {
-        super(studentPathRequestMatcher, providerManager);
+    public StudentAuthenticationFilter(RequestMatcher studentJwtTokenPathRequestMatcher, AuthenticationConverter studentAuthConverter, AuthenticationManager providerManager, AuthenticationFailureHandler studentAuthenticationFailureHandler, AuthenticationSuccessHandler studentAuthenticationSuccessHandler) {
+        super(studentJwtTokenPathRequestMatcher, providerManager);
         this.studentAuthConverter = studentAuthConverter;
         this.setAuthenticationFailureHandler(studentAuthenticationFailureHandler);
         this.setAuthenticationSuccessHandler(studentAuthenticationSuccessHandler);
     }
-
-    protected boolean isAlreadyAuthenticated() {
-        return SecurityContextHolder.getContext().getAuthentication() != null
-                && SecurityContextHolder.getContext().getAuthentication().isAuthenticated()
-                && !(SecurityContextHolder.getContext().getAuthentication() instanceof AnonymousAuthenticationToken)
-                && (SecurityContextHolder.getContext().getAuthentication() instanceof StudentAuthenticationToken);
-    }
-
 
     @Override
     protected boolean requiresAuthentication(HttpServletRequest request, HttpServletResponse response) {
@@ -43,5 +35,12 @@ public class StudentAuthenticationFilter extends AbstractAuthenticationProcessin
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         var unAuthenticatedStudentToken = (StudentAuthenticationToken) studentAuthConverter.convert(request);
         return getAuthenticationManager().authenticate(unAuthenticatedStudentToken);
+    }
+
+    protected boolean isAlreadyAuthenticated() {
+        return SecurityContextHolder.getContext().getAuthentication() != null
+                && SecurityContextHolder.getContext().getAuthentication().isAuthenticated()
+                && !(SecurityContextHolder.getContext().getAuthentication() instanceof AnonymousAuthenticationToken)
+                && (SecurityContextHolder.getContext().getAuthentication() instanceof StudentAuthenticationToken);
     }
 }
