@@ -1,19 +1,14 @@
 package dev.banji.LibReserve.model;
 
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Cascade;
 
 import java.util.List;
 
 import static lombok.AccessLevel.PRIVATE;
-import static org.hibernate.annotations.CascadeType.ALL;
 
 @Entity
 @Getter
@@ -22,10 +17,10 @@ import static org.hibernate.annotations.CascadeType.ALL;
 public class Student extends User {
     @Id
     @GeneratedValue
+    @Column(name = "student_id")
     private Long id;
-    @OneToMany
-    @Cascade(ALL)
-    private List<Reservation> reservationList;
+    @OneToMany(mappedBy = "student", cascade = CascadeType.PERSIST)
+    private List<StudentReservation> studentReservationList;
     private String matricNumber;
     private String department;
     private String level;
@@ -33,7 +28,7 @@ public class Student extends User {
     public Student(String firstName, String middleName, String lastName, String gender,
                    String phoneNumber, String emailAddress, String lga,
                    String state, String country, Account account,
-                   List<Reservation> reservationList,
+                   List<StudentReservation> studentReservationList,
                    String matricNumber, String department, String level, String password) {
         this.firstName = firstName;
         this.middleName = middleName;
@@ -45,7 +40,7 @@ public class Student extends User {
         this.state = state;
         this.country = country;
         this.account = account;
-        this.reservationList = reservationList;
+        this.studentReservationList = studentReservationList;
         this.matricNumber = matricNumber;
         this.department = department;
         this.level = level;
