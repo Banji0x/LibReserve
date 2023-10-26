@@ -24,6 +24,10 @@ public class StudentSecurityDetails implements UserDetails {
         return student.getPassword();
     }
 
+    public void eraseCredentials() {
+        student.setPassword(null);
+    }
+
     @Override
     public String getUsername() {
         return student.getFirstName() + " " + student.getLastName();

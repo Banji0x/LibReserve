@@ -24,6 +24,10 @@ public class LibrarianSecurityDetails implements UserDetails {
         return librarian.getPassword();
     }
 
+    public void eraseCredentials() {
+        librarian.setPassword(null);
+    }
+
     @Override
     public String getUsername() {
         return librarian.getFirstName() + " " + librarian.getLastName();
