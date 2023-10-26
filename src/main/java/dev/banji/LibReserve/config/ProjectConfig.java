@@ -38,13 +38,13 @@ import java.util.List;
 public class ProjectConfig {
     //Request Matchers
     @Bean
-    RequestMatcher librarianPathRequestMatcher() { //this request matcher is for token generation service
-        return new AntPathRequestMatcher("/lib-reserve/token/librarian", "POST");
+    RequestMatcher librarianJwtTokenPathRequestMatcher() { //this request matcher is for token generation service
+        return new AntPathRequestMatcher("/api/lib-reserve/token/librarian", "POST");
     }
 
     @Bean
-    RequestMatcher studentPathRequestMatcher() { //this request matcher is for the token generation service
-        return new AntPathRequestMatcher("/lib-reserve/token/student", "POST");
+    RequestMatcher studentJwtTokenPathRequestMatcher() { //this request matcher is for the token generation service
+        return new AntPathRequestMatcher("/api/lib-reserve/token/student", "POST");
     }
 
     //UserDetailsService
