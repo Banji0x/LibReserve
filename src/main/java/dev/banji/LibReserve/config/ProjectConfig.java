@@ -106,6 +106,11 @@ public class ProjectConfig {
         };
     }
 
+    //@Bean //TODO
+    //public Long seatNumberGenerator() {
+    //  return 0L;
+    //}
+//
     @Bean
     AuthenticationConverter studentAuthConverter() {
         return (httpServletRequest) -> {
@@ -148,7 +153,10 @@ public class ProjectConfig {
     //Rest Template
     @Bean
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        var factory = new SimpleClientHttpRequestFactory();
+        factory.setReadTimeout((int) (readTimeoutInSeconds * 1000));
+        factory.setConnectTimeout((int) (connectTimeoutInSeconds * 1000));
+        return new RestTemplate(factory);
     }
 
     //Password Encoder
