@@ -3,6 +3,8 @@ package dev.banji.LibReserve.config;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import dev.banji.LibReserve.config.filters.LibrarianAuthenticationFilter;
 import dev.banji.LibReserve.config.filters.StudentAuthenticationFilter;
+import dev.banji.LibReserve.config.filters.TokenBlacklistAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,11 +13,13 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.SessionManagementConfigurer;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -28,63 +32,51 @@ import static org.springframework.security.oauth2.jose.jws.MacAlgorithm.HS512;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
     private final LibrarianAuthenticationFilter librarianAuthenticationFilter;
     private final StudentAuthenticationFilter studentAuthenticationFilter;
     @Value("${jwt.key}")
     private String jwtKey;
+    private final TokenBlacklistAuthenticationFilter tokenBlacklistAuthenticationFilter;
 
-    public SecurityConfig(LibrarianAuthenticationFilter librarianAuthenticationFilter, StudentAuthenticationFilter studentAuthenticationFilter) {
-        this.librarianAuthenticationFilter = librarianAuthenticationFilter;
-        this.studentAuthenticationFilter = studentAuthenticationFilter;
+    private static void customize(SessionManagementConfigurer<HttpSecurity> sessionManagement) {
+        sessionManagement.sessionCreationPolicy(STATELESS);
     }
 
     //Security Filter Chain Configuration
     @Bean
     @Order(1)
-    public SecurityFilterChain loginSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
+    public SecurityFilterChain JWTTokenGeneratorFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
-                .securityMatcher("/lib-reserve/token/student", "/lib-reserve/token/librarian")
+                .securityMatcher("/api/lib-reserve/token/student", "/api/lib-reserve/token/librarian")
                 .addFilterBefore(studentAuthenticationFilter, AuthorizationFilter.class)
-                .addFilterBefore(librarianAuthenticationFilter, StudentAuthenticationFilter.class)
+                .addFilterBefore(librarianAuthenticationFilter, AuthorizationFilter.class)
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/lib-reserve/token/student").hasRole("STUDENT"); //authorization...
-                    auth.requestMatchers("/lib-reserve/token/librarian").hasRole("LIBRARIAN"); //authorization...
+                    auth.requestMatchers("/api/lib-reserve/token/student").hasRole("STUDENT"); //authorization...
+                    auth.requestMatchers("/api/lib-reserve/token/librarian").hasRole("LIBRARIAN"); //authorization...
                     auth.anyRequest().denyAll();
                 })
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(STATELESS))
+                .sessionManagement(SecurityConfig::customize)
                 .build();
     }
 
     @Bean
     @Order(2)
-    public SecurityFilterChain studentSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
-                .securityMatcher("/lib-reserve/student/**")
+                .securityMatcher("/api/lib-reserve/student/**", "/api/lib-reserve/librarian/**")
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-//                .addFilterBefore(studentAuthenticationFilter, AuthorizationFilter.class)
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable) //disable csrf...
                 .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
-                .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(STATELESS))
+                .addFilterAfter(tokenBlacklistAuthenticationFilter, BearerTokenAuthenticationFilter.class)
+                .sessionManagement(SecurityConfig::customize)
                 .build();
     }
 
     @Bean
     @Order(3)
-    public SecurityFilterChain librarianSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        return httpSecurity
-                .securityMatcher("/lib-reserve/librarian/**")
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-//                .addFilterAfter(librarianAuthenticationFilter, StudentAuthenticationFilter.class)
-                .csrf(AbstractHttpConfigurer::disable) //disable csrf...
-                .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
-                .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(STATELESS))
-                .build();
-    }
-
-    @Bean
-    @Order(4)
     public SecurityFilterChain h2ConsoleSecurityChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .securityMatcher(AntPathRequestMatcher.antMatcher("/h2-console/**"))
