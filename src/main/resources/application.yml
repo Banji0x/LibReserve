@@ -1,0 +1,46 @@
+# the jwt key must be at least 256 bits
+# the jwt key provided here is a dummy one, and should be replaced...
+# the jwt key is to sign and also authenticate tokens....
+# TODO Replace static Jwt
+jwt:
+  key: 3s4wk395383aka893948938zd8u0499a93jz9Anb949wi3ju982n387587za832bau384l384ha7293
+  expirationTime: 120
+
+university:
+  url: https://universitywebsite.com
+
+server:
+  port: 8080
+
+Spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  datasource:
+    generate-unique-name: false
+    name: LibReserve
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+library:
+  properties:
+    acceptingBookings: true
+    bookingTimeAllowedInMinutes: 120
+    numberOfSeats: 10
+    allowTimeExtension: true
+    maximumTimeExtensionAllowedInMinutes: 30
+    allowLateCheckIn: true
+    allowedTimeTillTokenExpirationInMinutes: 10
+    allowEarlyCheckIn: true
+    allowedEarlyCheckInMinutes: 5
+    sendNotifications: true
+    readTimeoutInSeconds: 10
+    connectTimeoutInSeconds: 10
+    notificationTimeListInMinutes:
+      - 30
+      - 10
+      - 5
+    enableSeatRandomization: true
