@@ -3,9 +3,9 @@ package dev.banji.LibReserve.model;
 import dev.banji.LibReserve.model.enums.ReservationStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -16,6 +16,7 @@ import java.time.LocalTime;
  * An abstract class representing a reservation in a library.
  */
 @MappedSuperclass
+@SuperBuilder
 @Getter
 @Setter
 public abstract class Reservation {
@@ -74,7 +75,6 @@ public abstract class Reservation {
      */
     protected LocalDateTime checkOutDateAndTime;
 
-    @Builder
     public Reservation(LocalTime checkInTime, long seatNumber, Duration intendedStay, LocalDate reservationCreationDate, LocalTime reservationCreationTime, LocalDate dateReservationWasMadeFor, LocalTime timeReservationWasMadeFor, ReservationStatus reservationStatus, LocalDateTime checkOutDateAndTime) {
         this.checkInTime = checkInTime;
         this.seatNumber = seatNumber;
