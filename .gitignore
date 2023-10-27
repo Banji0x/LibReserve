@@ -31,5 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
-!/src/main/resources/data.json
-!/src/test/
+
+/src/main/resources/data.json
+/src/test/java/dev/banji/LibReserve/controller/authentication/JWTGeneratorControllerTest.java
+/src/test/java/dev/banji/LibReserve/LoginControllerTest.java
