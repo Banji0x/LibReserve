@@ -90,7 +90,7 @@ public class LibraryManagementService {
         if (immediately) {
 
         }
-        List<Integer> notificationRolloutTimeList = libraryConfigurationProperties.getNotificationTimeList();
+        List<Integer> notificationRolloutTimeList = libraryConfigurationProperties.getNotificationTimeListInMinutes();
         List<Integer> list = notificationRolloutTimeList.stream().filter(notificationTime -> notificationTime.equals(timeLeft)).toList();
         if (list.isEmpty()) return;
 
