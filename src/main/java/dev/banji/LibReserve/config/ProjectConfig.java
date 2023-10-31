@@ -21,8 +21,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -157,12 +155,6 @@ public class ProjectConfig {
         factory.setReadTimeout((int) (readTimeoutInSeconds * 1000));
         factory.setConnectTimeout((int) (connectTimeoutInSeconds * 1000));
         return new RestTemplate(factory);
-    }
-
-    //Password Encoder
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
     //Command Line Runner
