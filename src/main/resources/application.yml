@@ -13,6 +13,10 @@ server:
   port: 8080
 
 Spring:
+  application:
+    name:
+      LibReserve
+
   jpa:
     hibernate:
       ddl-auto: create-drop

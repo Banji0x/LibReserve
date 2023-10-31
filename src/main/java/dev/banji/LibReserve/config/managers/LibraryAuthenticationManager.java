@@ -6,8 +6,8 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AuthenticationManager extends ProviderManager {
-    public AuthenticationManager(LibrarianAuthenticationProvider librarianAuthenticationProvider, StudentAuthenticationProvider studentAuthenticationProvider) {
+public class LibraryAuthenticationManager extends ProviderManager {
+    public LibraryAuthenticationManager(LibrarianAuthenticationProvider librarianAuthenticationProvider, StudentAuthenticationProvider studentAuthenticationProvider) {
         super(studentAuthenticationProvider, librarianAuthenticationProvider);
     }
 }
