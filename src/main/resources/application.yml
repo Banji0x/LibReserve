@@ -6,8 +6,7 @@ jwt:
   key: 3s4wk395383aka893948938zd8u0499a93jz9Anb949wi3ju982n387587za832bau384l384ha7293
   expirationTime: 120
 
-university:
-  url: https://universitywebsite.com
+
 
 server:
   port: 8080
@@ -48,3 +47,5 @@ library:
       - 10
       - 5
     enableSeatRandomization: true
+    universityUrl: https://universitywebsite.com
+

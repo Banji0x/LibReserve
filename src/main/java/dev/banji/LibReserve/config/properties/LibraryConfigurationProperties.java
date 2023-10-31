@@ -14,7 +14,7 @@ import java.util.Set;
 @Getter
 @Setter
 public final class LibraryConfigurationProperties {
-
+    private String universityUrl;
     private Boolean acceptingBookings;
     private Long bookingTimeAllowedInMinutes;
     private Long numberOfSeats;
