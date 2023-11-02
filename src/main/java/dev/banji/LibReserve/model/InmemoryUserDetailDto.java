@@ -6,6 +6,4 @@ public interface InmemoryUserDetailDto {
     String getIdentifier();
 
     Reservation getReservation();
-
-    String getJwt();
 }

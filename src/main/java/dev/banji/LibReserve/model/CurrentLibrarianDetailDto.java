@@ -19,8 +19,4 @@ public record CurrentLibrarianDetailDto(Long seatNumber, String staffNumber, Lib
         return librarianReservation;
     }
 
-    @Override
-    public String getJwt() {
-        return jwt.toString();
-    }
 }
