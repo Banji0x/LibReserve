@@ -16,7 +16,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Component
-public class TokenBlacklistAuthenticationFilter extends OncePerRequestFilter {
+public class JwtAccessTokenBlacklistAuthenticationFilter extends OncePerRequestFilter {
     private final List<Jwt> blackListedJwtTokenList;
 
     @Override

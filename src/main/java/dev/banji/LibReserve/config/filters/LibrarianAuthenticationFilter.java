@@ -21,10 +21,10 @@ public class LibrarianAuthenticationFilter extends AbstractAuthenticationProcess
 
     public LibrarianAuthenticationFilter(RequestMatcher librarianJwtTokenPathRequestMatcher,
                                          AuthenticationConverter librarianAuthConverter,
-                                         AuthenticationManager providerManager,
+                                         AuthenticationManager libraryAuthenticationManager,
                                          AuthenticationFailureHandler librarianAuthenticationFailureHandler,
                                          AuthenticationSuccessHandler librarianAuthenticationSuccessHandler) {
-        super(librarianJwtTokenPathRequestMatcher, providerManager);
+        super(librarianJwtTokenPathRequestMatcher, libraryAuthenticationManager);
         this.librarianAuthConverter = librarianAuthConverter;
         this.setAuthenticationFailureHandler(librarianAuthenticationFailureHandler);
         this.setAuthenticationSuccessHandler(librarianAuthenticationSuccessHandler);

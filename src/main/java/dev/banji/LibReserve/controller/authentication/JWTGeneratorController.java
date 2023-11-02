@@ -17,12 +17,12 @@ public class JWTGeneratorController {
     @PostMapping("/librarian")
     @PreAuthorize("hasRole('LIBRARIAN')")
     public String librarianToken(Authentication authentication) {
-        return tokenService.generateJwt(authentication);
+        return tokenService.generateAccessToken(authentication);
     }
 
     @PostMapping("/student")
     @PreAuthorize("hasRole('STUDENT')")
     public String studentToken(Authentication authentication) {
-        return tokenService.generateJwt(authentication);
+        return tokenService.generateAccessToken(authentication);
     }
 }

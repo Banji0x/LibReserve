@@ -7,21 +7,20 @@ import lombok.Builder;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-@SuppressWarnings("ConstantConditions")
-public class FetchStudentReservationDto extends AbstractFetchReservationDto {
+public class StudentReservationDto extends AbstractReservationDto {
     private final String matricNumber;
     private final Boolean stayExtended;
-    private Duration totalExtensionDuration;
+    private final Duration totalExtensionDuration;
 
     @Builder
-    public FetchStudentReservationDto(Long seatNumber,
-                                      LocalDateTime reservationCreationDateTime,
-                                      LocalDateTime intendedUsageDateTime,
-                                      LocalDateTime checkOutDateAndTime,
-                                      ReservationStatus reservationStatus,
-                                      String matricNumber,
-                                      LocalDateTime checkInDateAndTime,
-                                      Boolean stayExtended, Duration intendedStay, Duration totalExtensionDuration) {
+    public StudentReservationDto(Long seatNumber,
+                                 LocalDateTime reservationCreationDateTime,
+                                 LocalDateTime intendedUsageDateTime,
+                                 LocalDateTime checkOutDateAndTime,
+                                 ReservationStatus reservationStatus,
+                                 String matricNumber,
+                                 LocalDateTime checkInDateAndTime,
+                                 Boolean stayExtended, Duration intendedStay, Duration totalExtensionDuration) {
         super(seatNumber, reservationCreationDateTime, intendedUsageDateTime, checkOutDateAndTime, reservationStatus, checkInDateAndTime, intendedStay);
         if (stayExtended.equals(false) && totalExtensionDuration != null)
             throw new LibraryRuntimeException(); //TODO write a more descriptive message..

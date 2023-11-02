@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @SuperBuilder
 @Getter
 @Setter
-public abstract class AbstractFetchReservationDto {
+public abstract class AbstractReservationDto {
     protected Long seatNumber;
     protected LocalDateTime reservationCreationDateTime;
     protected LocalDateTime checkInDateAndTime;
@@ -20,7 +20,7 @@ public abstract class AbstractFetchReservationDto {
     protected LocalDateTime checkOutDateAndTime;
     protected ReservationStatus reservationStatus;
 
-    protected AbstractFetchReservationDto(Long seatNumber, LocalDateTime reservationCreationDateTime, LocalDateTime intendedUsageDateTime, LocalDateTime checkOutDateAndTime, ReservationStatus reservationStatus, LocalDateTime checkInDateAndTime, Duration intendedStay) {
+    protected AbstractReservationDto(Long seatNumber, LocalDateTime reservationCreationDateTime, LocalDateTime intendedUsageDateTime, LocalDateTime checkOutDateAndTime, ReservationStatus reservationStatus, LocalDateTime checkInDateAndTime, Duration intendedStay) {
         this.seatNumber = seatNumber;
         this.reservationCreationDateTime = reservationCreationDateTime;
         this.intendedUsageDateTime = intendedUsageDateTime;
