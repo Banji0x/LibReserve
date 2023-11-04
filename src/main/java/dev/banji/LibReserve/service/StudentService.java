@@ -2,14 +2,16 @@ package dev.banji.LibReserve.service;
 
 import dev.banji.LibReserve.config.properties.LibraryConfigurationProperties;
 import dev.banji.LibReserve.exceptions.*;
-import dev.banji.LibReserve.model.*;
+import dev.banji.LibReserve.model.LibraryOccupancyQueue;
+import dev.banji.LibReserve.model.Reservation;
+import dev.banji.LibReserve.model.Student;
+import dev.banji.LibReserve.model.StudentReservation;
 import dev.banji.LibReserve.model.dtos.CurrentStudentDetailDto;
-import dev.banji.LibReserve.model.dtos.FetchStudentReservationDto;
+import dev.banji.LibReserve.model.dtos.StudentReservationDto;
 import dev.banji.LibReserve.model.enums.ReservationStatus;
 import dev.banji.LibReserve.repository.StudentRepository;
 import dev.banji.LibReserve.repository.StudentReservationRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -17,10 +19,10 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.IntStream;
+import java.util.Random;
+import java.util.stream.LongStream;
 
 import static dev.banji.LibReserve.model.enums.ReservationStatus.*;
 
@@ -29,12 +31,12 @@ import static dev.banji.LibReserve.model.enums.ReservationStatus.*;
 public class StudentService {
     private final LibraryConfigurationProperties libraryConfigurationProperties;
     private final StudentRepository studentRepository;
-    private final StudentReservationRepository reservationRepository;
+    private final StudentReservationRepository studentReservationRepository;
     private final ReservationCodeService reservationCodeService;
     private final LibraryOccupancyQueue libraryOccupancyQueue;
     private final JwtTokenService jwtTokenService;
 
-    private String handleReservations(String matricNumber, Boolean isWalkInAccess, LocalDateTime proposedDateAndTime, Duration duration, Boolean isTodayBooking, Jwt jwt) {
+    private StudentReservation reservationHandler(String matricNumber, Boolean isWalkInAccess, LocalDateTime proposedDateAndTime, Duration duration, Boolean isTodayBooking) {
 
         //check if there's the library is operational...
         if (!libraryConfigurationProperties.getAcceptingBookings())
@@ -55,49 +57,43 @@ public class StudentService {
             throw UserNotFoundException.StudentNotFoundException();
         });
 
-        //create studentReservation..
-        StudentReservation studentReservation = StudentReservation
-                .builder()
-                .checkInTime(proposedDateAndTime.toLocalTime())
-                .seatNumber(availableSeat)
-                .intendedStay(duration)
-                .reservationCreationDate(LocalDate.now())
-                .reservationCreationTime(LocalTime.now())
-                .dateReservationWasMadeFor(proposedDateAndTime.toLocalDate())
-                .timeReservationWasMadeFor(proposedDateAndTime.toLocalTime())
-                .reservationStatus(BOOKED)
-                .student(student)
-                .reservationCode(generatedReservationCode)
-                .build();
+        //create reservation...
+        StudentReservation studentReservation = StudentReservation.builder().checkInTime(proposedDateAndTime.toLocalTime()).seatNumber(availableSeat).intendedStay(duration).reservationCreationDate(LocalDate.now()).reservationCreationTime(LocalTime.now()).dateReservationWasMadeFor(proposedDateAndTime.toLocalDate()).timeReservationWasMadeFor(proposedDateAndTime.toLocalTime()).reservationStatus(BOOKED).student(student).reservationCode(generatedReservationCode).build();
 
         //persist to db...
         student.getStudentReservationList().add(studentReservation);
         studentRepository.save(student);
-
-        // return the studentReservation code
-        return generatedReservationCode;
+        // return the studentReservation
+        return studentReservation;
     }
 
-    public String reserveForTodayRequest(String matricNumber, LocalDateTime proposedDateAndTime, Duration duration, Jwt jwt) {
-        return handleReservations(matricNumber, false, proposedDateAndTime, duration, true, jwt);
+    public String reserveForTodayRequest(String matricNumber, LocalDateTime proposedDateAndTime, Duration duration) {
+        return reservationHandler(matricNumber, false, proposedDateAndTime, duration, true).getReservationCode();
     }
 
-    public String handleWalkInRequest(String matricNumber, Duration duration, Jwt jwt) {
-        return handleReservations(matricNumber, true, LocalDateTime.now(), duration, false, jwt);
+    public String handleWalkInRequest(String matricNumber, Duration duration) {
+        StudentReservation studentReservation = reservationHandler(matricNumber, true, LocalDateTime.now(), duration, true);
+        boolean signedIn = libraryOccupancyQueue.signInStudent(new CurrentStudentDetailDto(matricNumber, studentReservation));
+        if (!signedIn) throw new LibraryRuntimeException();
+        return studentReservation.getReservationCode();
     }
 
-    public String handleAdvancedRequest(String matricNumber, LocalDateTime proposedDateAndTime, Duration duration, Jwt jwt) {
-        return handleReservations(matricNumber, false, proposedDateAndTime, duration, false, jwt);
+    public String handleAdvancedRequest(String matricNumber, LocalDateTime proposedDateAndTime, Duration duration) {
+        return reservationHandler(matricNumber, false, proposedDateAndTime, duration, false).getReservationCode();
     }
 
-    public String requestForExtension(Authentication authentication, String matricNumber, Duration extensionDuration) {
-        StudentReservation reservation = (StudentReservation) libraryOccupancyQueue.hasASession(matricNumber);
+    public Boolean requestForExtension(String matricNumber, Duration extensionDuration) {
+        //fetch reservation...
+        StudentReservation reservation = (StudentReservation) libraryOccupancyQueue.isUserPresentInLibrary(matricNumber)
+                .orElseThrow(() -> {
+                    throw new StudentNotInLibraryException();
+                });
+
         if (!libraryConfigurationProperties.getAllowTimeExtension()) // if time extensionDuration is not allowed
             throw new TimeExtensionNotPermittedException();
-        if (!libraryConfigurationProperties.getAllowMultipleTimeExtension())
+        if (!libraryConfigurationProperties.getAllowMultipleTimeExtension()) //if time multiple time extension is not allowed
             throw new MultipleTimeExtensionException();
-        if (extensionDuration.toMinutes() > libraryConfigurationProperties
-                .getMaximumTimeExtensionAllowedInMinutes()) //check the time duration
+        if (extensionDuration.toMinutes() > libraryConfigurationProperties.getMaximumTimeExtensionAllowedInMinutes()) //check the time duration
             throw new DurationExceedsLimitException();
 
         //update reservation...
@@ -107,119 +103,82 @@ public class StudentService {
 
         reservation.setReservationStatus(TIME_EXTENDED);
         reservation.setTotalExtensionDuration(totalDuration);
-        reservationRepository.save(reservation);
-
-        //generate new Jwt token...
-        return jwtTokenService.generateJwt(authentication, extensionDuration.toMinutes());
+        studentReservationRepository.save(reservation);
+        // TODO send notification...
+        return true;
     }
 
-    public boolean studentLogout(Jwt jwt, String matricNumber) {
-
-        StudentReservation studentReservation = (StudentReservation) libraryOccupancyQueue.hasASession(matricNumber);
-        studentReservation.setCheckOutDateAndTime(LocalDateTime.now()); //update time...
-        studentReservation.setReservationStatus(CHECKED_OUT);//change studentReservation status
-        reservationRepository.save(studentReservation);//update in repository
-
-        //create dto...
-        var currentStudentDetailDto = new CurrentStudentDetailDto(studentReservation.getSeatNumber(), matricNumber, studentReservation, jwt);
-
+    public boolean studentLogout(Jwt jwt, String matricNumber) { //this means that the user should always be prompted before he/she is logged out.because logging out will invalidate his/her jwt token...
         //add JWT to blacklist
-        boolean jwtBlackListed = jwtTokenService.blacklistJwt(String.valueOf(jwt));
+        boolean blackListed = jwtTokenService.blacklistAccessToken(jwt);
 
-        //free up seat...
-        boolean seatFreedUp = libraryOccupancyQueue.signOutUser(currentStudentDetailDto);
-        return jwtBlackListed && seatFreedUp;
+        if (libraryOccupancyQueue.isUserPresentInLibrary(matricNumber).isPresent())
+            return checkoutStudent(matricNumber) && blackListed;
+        return blackListed;
     }
 
-    public FetchStudentReservationDto retrieveLastReservation(String matricNumber) {
-        Optional<StudentReservation> optionalStudentReservation = reservationRepository
-                .findFirstByStudentMatricNumber(matricNumber);
+    private boolean checkoutStudent(String matricNumber) { //meant to be used by the student...
+        StudentReservation reservation = (StudentReservation) libraryOccupancyQueue.isUserPresentInLibrary(matricNumber).orElseThrow(() -> {
+            throw new StudentNotInLibraryException();
+        });
+        reservation.setReservationStatus(CHECKED_OUT);
+        reservation.setCheckOutDateAndTime(LocalDateTime.now());
+        studentReservationRepository.save(reservation);
+        return libraryOccupancyQueue.signOutStudent(new CurrentStudentDetailDto(matricNumber, reservation));
+    }
+
+    public StudentReservationDto retrieveLastReservation(String matricNumber) {
+        Optional<StudentReservation> optionalStudentReservation = studentReservationRepository.findFirstByStudentMatricNumber(matricNumber);
 
         StudentReservation studentReservation = optionalStudentReservation.orElseThrow(() -> {
             throw new ReservationDoesNotExistException();
         });
 
-        return FetchStudentReservationDto
-                .builder()
-                .seatNumber(studentReservation.getSeatNumber())
-                .reservationCreationDateTime(LocalDateTime.of(studentReservation.getReservationCreationDate(), studentReservation.getReservationCreationTime()))
-                .intendedUsageDateTime(LocalDateTime.of(studentReservation.getDateReservationWasMadeFor(), studentReservation.getTimeReservationWasMadeFor()))
-                .intendedStay(studentReservation.getIntendedStay())
-                .checkOutDateAndTime(studentReservation.getCheckOutDateAndTime())
-                .reservationStatus(studentReservation.getReservationStatus())
-                .matricNumber(matricNumber)
-                .stayExtended(studentReservation.isStayExtended())
-                .totalExtensionDuration(studentReservation.getTotalExtensionDuration())
-                .build();
+        return StudentReservationDto.builder().seatNumber(studentReservation.getSeatNumber()).reservationCreationDateTime(LocalDateTime.of(studentReservation.getReservationCreationDate(), studentReservation.getReservationCreationTime())).intendedUsageDateTime(LocalDateTime.of(studentReservation.getDateReservationWasMadeFor(), studentReservation.getTimeReservationWasMadeFor())).intendedStay(studentReservation.getIntendedStay()).checkOutDateAndTime(studentReservation.getCheckOutDateAndTime()).reservationStatus(studentReservation.getReservationStatus()).matricNumber(matricNumber).stayExtended(studentReservation.isStayExtended()).totalExtensionDuration(studentReservation.getTotalExtensionDuration()).build();
 
     }
 
-    public List<FetchStudentReservationDto> fetchAllReservations(String matricNumber) {
-        List<StudentReservation> reservationList = reservationRepository.findByStudentMatricNumber(matricNumber);
+    public List<StudentReservationDto> fetchAllReservations(String matricNumber) {
+        List<StudentReservation> reservationList = studentReservationRepository.findByStudentMatricNumber(matricNumber);
         if (reservationList.isEmpty()) throw new ReservationDoesNotExistException();
-        return reservationList.stream().map(studentReservation ->
-                FetchStudentReservationDto
-                        .builder()
-                        .seatNumber(studentReservation.getSeatNumber())
-                        .reservationCreationDateTime(LocalDateTime.of(studentReservation.getReservationCreationDate(), studentReservation.getReservationCreationTime()))
-                        .intendedUsageDateTime(LocalDateTime.of(studentReservation.getDateReservationWasMadeFor(), studentReservation.getTimeReservationWasMadeFor()))
-                        .intendedStay(studentReservation.getIntendedStay())
-                        .checkOutDateAndTime(studentReservation.getCheckOutDateAndTime())
-                        .reservationStatus(studentReservation.getReservationStatus())
-                        .matricNumber(studentReservation.getStudent().getMatricNumber())
-                        .stayExtended(studentReservation.isStayExtended())
-                        .totalExtensionDuration(studentReservation.getTotalExtensionDuration())
-                        .build()).toList();
+        return reservationList.stream().map(studentReservation -> StudentReservationDto.builder().seatNumber(studentReservation.getSeatNumber()).reservationCreationDateTime(LocalDateTime.of(studentReservation.getReservationCreationDate(), studentReservation.getReservationCreationTime())).intendedUsageDateTime(LocalDateTime.of(studentReservation.getDateReservationWasMadeFor(), studentReservation.getTimeReservationWasMadeFor())).intendedStay(studentReservation.getIntendedStay()).checkOutDateAndTime(studentReservation.getCheckOutDateAndTime()).reservationStatus(studentReservation.getReservationStatus()).matricNumber(studentReservation.getStudent().getMatricNumber()).stayExtended(studentReservation.isStayExtended()).totalExtensionDuration(studentReservation.getTotalExtensionDuration()).build()).toList();
     }
 
-    public List<FetchStudentReservationDto> fetchReservationsByStatus(String matricNumber, ReservationStatus reservationStatus) {
-        var reservationList = reservationRepository.findByReservationStatusAndStudentMatricNumber(reservationStatus, matricNumber);
+    public List<StudentReservationDto> fetchReservationsByStatus(String matricNumber, ReservationStatus reservationStatus) {
+        var reservationList = studentReservationRepository.findByReservationStatusAndStudentMatricNumber(reservationStatus, matricNumber);
         if (reservationList.isEmpty()) throw new ReservationDoesNotExistException();
-        return reservationList.stream().map(studentReservation -> FetchStudentReservationDto
-                .builder()
-                .seatNumber(studentReservation.getSeatNumber())
-                .reservationCreationDateTime(LocalDateTime.of(studentReservation.getReservationCreationDate(), studentReservation.getReservationCreationTime()))
-                .intendedUsageDateTime(LocalDateTime.of(studentReservation.getDateReservationWasMadeFor(), studentReservation.getTimeReservationWasMadeFor()))
-                .intendedStay(studentReservation.getIntendedStay())
-                .checkOutDateAndTime(studentReservation.getCheckOutDateAndTime())
-                .reservationStatus(studentReservation.getReservationStatus())
-                .matricNumber(matricNumber)
-                .stayExtended(studentReservation.isStayExtended())
-                .totalExtensionDuration(studentReservation.getTotalExtensionDuration())
-                .build()).toList();
+        return reservationList.stream().map(studentReservation -> StudentReservationDto.builder().seatNumber(studentReservation.getSeatNumber()).reservationCreationDateTime(LocalDateTime.of(studentReservation.getReservationCreationDate(), studentReservation.getReservationCreationTime())).intendedUsageDateTime(LocalDateTime.of(studentReservation.getDateReservationWasMadeFor(), studentReservation.getTimeReservationWasMadeFor())).intendedStay(studentReservation.getIntendedStay()).checkOutDateAndTime(studentReservation.getCheckOutDateAndTime()).reservationStatus(studentReservation.getReservationStatus()).matricNumber(matricNumber).stayExtended(studentReservation.isStayExtended()).totalExtensionDuration(studentReservation.getTotalExtensionDuration()).build()).toList();
     }
 
     public boolean cancelAllReservations(String matricNumber) {
-        List<StudentReservation> reservationList = reservationRepository.findByStudentMatricNumberAndReservationStatus(matricNumber, BOOKED);
+        List<StudentReservation> reservationList = studentReservationRepository.findByStudentMatricNumberAndReservationStatus(matricNumber, BOOKED);
         if (reservationList.isEmpty()) return false;
         reservationList.forEach(reservation -> {
             reservation.setReservationStatus(CANCELLED);
-            reservationRepository.save(reservation);
+            studentReservationRepository.save(reservation);
         });
-        reservationRepository.saveAll(reservationList);
+        studentReservationRepository.saveAll(reservationList);
         return true;
     }
 
     public boolean cancelReservationsByCode(String matricNumber, List<String> reservationCodesList) {
-        reservationCodesList.forEach(reservationCode -> {
-            cancelReservationByCode(reservationCode, matricNumber);
-        });
+        reservationCodesList.forEach(reservationCode -> cancelReservationByCode(reservationCode, matricNumber));
         return true;
     }
 
     public boolean cancelLastReservation(String matricNumber) {
-        StudentReservation reservation = reservationRepository.findByReservationStatusAndStudentMatricNumber(BOOKED, matricNumber).get(0);
+        StudentReservation reservation = studentReservationRepository.findByReservationStatusAndStudentMatricNumber(BOOKED, matricNumber).get(0);
         reservation.setReservationStatus(CANCELLED);
-        reservationRepository.save(reservation);
+        studentReservationRepository.save(reservation);
         return true;
     }
 
     public boolean cancelReservationByCode(String reservationCode, String matricNumber) {
-        StudentReservation reservation = reservationRepository.findByReservationCodeAndStudentMatricNumber(reservationCode, matricNumber).orElseThrow(() -> {
+        StudentReservation reservation = studentReservationRepository.findByReservationCodeAndStudentMatricNumber(reservationCode, matricNumber).orElseThrow(() -> {
             throw new ReservationDoesNotExistException();
         });
         reservation.setReservationStatus(CANCELLED);
-        reservationRepository.save(reservation);
+        studentReservationRepository.save(reservation);
         return true;
     }
 
@@ -227,42 +186,70 @@ public class StudentService {
 
         if (walkInAccess) { //TODO maybe implement an internal Reservation Resolver...
             //If student want's access right away
+            //check if library is full
+            libraryOccupancyQueue.isLibraryFull();
+
+            // check If the date matches today...
+            if (!proposedDateAndTime.toLocalDate().isEqual(LocalDate.now()))
+                throw new ReservationNotForTodayException();
 
             //Check if Student is in currently in the library
-            libraryOccupancyQueue.hasASession(matricNumber);
+            libraryOccupancyQueue.isUserPresentInLibrary(matricNumber);
 
             //Check if student already has multiple bookings for that day and if student has reached the maximum limit already.
             int numberOfBookings = multipleBookingsCheck(matricNumber, LocalDate.now(), CHECKED_OUT);
             maximumLimitCheck(numberOfBookings);
 
-            //check if there's a spot in the library right now, and return available seat number...
-            return libraryOccupancyQueue.isLibraryFull();
+            //return an available seat number...
+            return seatNumberResolver(libraryOccupancyQueue.getAvailableSeatNumberList());
+
         } else if (todayBooking) {
             LocalTime proposedStartTime = proposedDateAndTime.toLocalTime();
             LocalTime proposedEndTime = proposedStartTime.plusMinutes(duration.toMinutes());
 
             // check If the proposed booking date is for today
-//            if (proposedDateAndTime.toLocalDate().isEqual(LocalDate.now()))
-//                throw ReservationNotForTodayException.ReservationCannotBeForTodayException();
+            if (!proposedDateAndTime.toLocalDate().isEqual(LocalDate.now()))
+                throw new ReservationNotForTodayException();
 
             // Check if student already has multiple bookings for today and if student has reached the maximum limit already
             int numberOfBookings = multipleBookingsCheck(matricNumber, LocalDate.now(), CHECKED_OUT);
             maximumLimitCheck(numberOfBookings);
 
             //check the time the student is requesting for access...check if there are is an overlap...
-            List<StudentReservation> bookedReservationForTodayList = reservationRepository.findByDateReservationWasMadeForAndReservationStatus(LocalDate.now(), BOOKED);
-            ArrayList<InmemoryUserDetailDto> occupancyQueueAsList = libraryOccupancyQueue.fetchOccupancyQueueAsList();
+            List<StudentReservation> bookedReservationForTodayList = studentReservationRepository.findByDateReservationWasMadeForAndReservationStatus(LocalDate.now(), BOOKED);
 
-            var availableSeatNumberOptional = bookedReservationForTodayList.stream().filter(reservation -> !checkForOverlap(proposedStartTime, reservation, proposedEndTime)).map(Reservation::getSeatNumber).findFirst();
+            var currentOccupancyList = libraryOccupancyQueue.fetchOccupancyQueueAsList().stream().map(user -> (StudentReservation) user.getReservation()).toList();
 
-            if (availableSeatNumberOptional.isPresent()) return availableSeatNumberOptional.get();
+            //check the `bookedReservationForTodayList` list size. If the size is not up to greater or equal to the total number of seats
+            //then it means that at least, there's a spot available...
+            //this condition might be rarely triggered because it uses the size of the reservationList for today.
+            if (bookedReservationForTodayList.size() < libraryConfigurationProperties.getNumberOfSeats()) {
+                List<Long> availableSeatsList = LongStream.rangeClosed(1, libraryConfigurationProperties.getNumberOfSeats()).filter(seat -> bookedReservationForTodayList.stream().noneMatch(reservation -> reservation.getSeatNumber() == seat)).boxed().toList();
+                return seatNumberResolver(availableSeatsList);
+            }
 
-            availableSeatNumberOptional = occupancyQueueAsList.stream().filter(studentDetailDto -> !checkForOverlap(proposedStartTime, (StudentReservation) studentDetailDto.getReservation(), proposedEndTime)).map(InmemoryUserDetailDto::getSeatNumber).findFirst();
-            if (availableSeatNumberOptional.isPresent()) return availableSeatNumberOptional.get();
-            throw new ReservationOverlapException();
+            //since the number of bookings for that day is higher than total number of available seats,
+            //then check if it's possible to find a spot without overlapping an existing reservation...
+            var availableSeatNumberList = bookedReservationForTodayList.stream().filter(reservation -> checkForOverlap(proposedStartTime, reservation, proposedEndTime)).toList();
+            if (!availableSeatNumberList.isEmpty())
+                return seatNumberResolver(availableSeatNumberList.stream().mapToLong(Reservation::getSeatNumber).boxed().toList());
+
+            //finally if it's none of the conditions above match, then check the current occupancy list for a spot that won't overlap...
+            //since there might be a spot available since the search earlier was done using the reservation status as "BOOKED"
+            availableSeatNumberList = currentOccupancyList.stream().filter(reservation -> checkForOverlap(proposedStartTime, reservation, proposedEndTime)).toList();
+
+            if (!availableSeatNumberList.isEmpty())
+                return seatNumberResolver(availableSeatNumberList.stream().mapToLong(Reservation::getSeatNumber).boxed().toList());
+
+            throw new NoSpotAvailableException();
+            //TODO maybe rather than throwing an exception,
+            //TODO why not simple send a notification asking if he/she want's to be placed in a waiting queue pending when a spot opens up or maybe book for another time...
         } else {
             //meaning not today tomorrow and onwards...
             //make sure you verify it's an advanced date and not a past date...
+            LocalTime proposedStartTime = proposedDateAndTime.toLocalTime();
+            LocalTime proposedEndTime = proposedStartTime.plusMinutes(duration.toMinutes());
+
             if (proposedDateAndTime.toLocalDate().isBefore(LocalDate.now()) || proposedDateAndTime.toLocalDate().isEqual(LocalDate.now()))
                 throw new AdvancedBookingRequiredException();
 
@@ -272,33 +259,28 @@ public class StudentService {
             }
 
             //retrieve booking's for that day...
-            List<StudentReservation> studentReservationList = reservationRepository.findByDateReservationWasMadeForAndReservationStatus(proposedDateAndTime.toLocalDate(), BOOKED).stream().toList();
-
-            if (studentReservationList.size() >= libraryConfigurationProperties.getNumberOfSeats())
-                throw LibraryClosedException.LibraryMaximumLimitReached();
+            List<StudentReservation> studentReservationList = studentReservationRepository.findByDateReservationWasMadeForAndReservationStatus(proposedDateAndTime.toLocalDate(), BOOKED).stream().toList();
 
             // Check if student already has multiple bookings for that day and if student has reached the maximum limit already.
             int numberOfBookings = multipleBookingsCheck(matricNumber, proposedDateAndTime.toLocalDate(), BOOKED);
             maximumLimitCheck(numberOfBookings);
 
-            List<Long> takenSeatsList = studentReservationList.stream().map(Reservation::getSeatNumber).toList();
+            //check a reservation that does not overlap the existing reservation can be made ...
+            List<StudentReservation> reservationList = studentReservationList.stream().filter(reservation -> checkForOverlap(proposedStartTime, reservation, proposedEndTime)).toList();
 
-            return IntStream.rangeClosed(1, Math.toIntExact(libraryConfigurationProperties.getNumberOfSeats())).filter(takenSeat -> !takenSeatsList.contains(takenSeat)).boxed().map(availableSeat -> Long.valueOf(availableSeat)).findFirst().get();
+            if (!reservationList.isEmpty()) {
+                List<Long> availableSeatList = LongStream.rangeClosed(1, libraryConfigurationProperties.getNumberOfSeats()).filter(seat -> reservationList.stream().noneMatch(reservation -> reservation.getSeatNumber() == seat)).boxed().toList();
+                return seatNumberResolver(availableSeatList);
+            }
+
+            throw new NoSpotAvailableException();
+            //TODO maybe rather than throwing an exception,
+            //TODO why not simple send a notification asking if he/she want's to be placed in a waiting queue pending when a spot opens up or maybe book for another time...
         }
     }
 
-    private void checkForMultipleAndMaximumLimits(String matricNumber, LocalDate localDate, ReservationStatus status) {
-        int reservationsCount = reservationRepository.findByStudentMatricNumberAndMadeForDateAndReservationStatus(matricNumber, localDate, status);
-
-        if (!libraryConfigurationProperties.getAllowMultipleBookings() && reservationsCount >= 1)
-            throw new MultipleBookingException();
-
-        if (libraryConfigurationProperties.getEnableLimitPerDay() && reservationsCount >= libraryConfigurationProperties.getMaximumLimitPerDay())
-            throw new StudentReservationLimitExceededException(libraryConfigurationProperties.getMaximumLimitPerDay());
-    }
-
     private int multipleBookingsCheck(String matricNumber, LocalDate localDate, ReservationStatus status) {
-        int reservationCount = reservationRepository.findByStudentMatricNumberAndMadeForDateAndReservationStatus(matricNumber, localDate, status);
+        int reservationCount = studentReservationRepository.findByStudentMatricNumberAndDateReservationWasMadeForAndReservationStatus(matricNumber, localDate, status);
         if (!libraryConfigurationProperties.getAllowMultipleBookings() && reservationCount >= 1)
             throw new MultipleBookingException();
         return reservationCount;
@@ -306,22 +288,24 @@ public class StudentService {
 
     private void maximumLimitCheck(int reservationsCount) {
         if (libraryConfigurationProperties.getEnableLimitPerDay() && reservationsCount >= libraryConfigurationProperties.getMaximumLimitPerDay())
-            throw new StudentReservationLimitExceededException(libraryConfigurationProperties.getMaximumLimitPerDay());
+            throw new ReservationLimitExceededException(libraryConfigurationProperties.getMaximumLimitPerDay());
     }
 
     private boolean checkForOverlap(LocalTime proposedStartTime, StudentReservation studentReservation, LocalTime proposedEndTime) {
-        LocalTime studentEstimatedEndTime = studentReservation.getCheckInTime().plusMinutes(studentReservation.getIntendedStay().toMinutes());
-        //check if time extension is allowed and if the existing student reservation has asked for a time extension...
-        if (libraryConfigurationProperties.getAllowTimeExtension() && studentReservation.isStayExtended()) {
-            studentEstimatedEndTime = studentEstimatedEndTime.plusMinutes(studentReservation.getTotalExtensionDuration().toMinutes());
-        }
+        LocalTime alreadyBookedStudentEstimatedEndTime = studentReservation.getCheckInTime().plusMinutes(studentReservation.getIntendedStay().toMinutes());
 
-        return (proposedStartTime.isBefore(studentEstimatedEndTime) &&
-                proposedEndTime.isAfter(studentReservation.getCheckInTime())) ||
-                (proposedStartTime.isBefore(studentReservation.getCheckInTime())
-                        && proposedEndTime.isAfter(studentEstimatedEndTime))
-                || (proposedStartTime.isAfter(studentReservation.getCheckInTime())
-                && proposedEndTime.isBefore(studentEstimatedEndTime));
+        //check if time extension is allowed and if the existing student reservation has asked for a time extension...
+        if (libraryConfigurationProperties.getAllowTimeExtension() && studentReservation.isStayExtended())
+            alreadyBookedStudentEstimatedEndTime = alreadyBookedStudentEstimatedEndTime.plusMinutes(studentReservation.getTotalExtensionDuration().toMinutes());
+
+        return (!proposedStartTime.isBefore(alreadyBookedStudentEstimatedEndTime) || !proposedEndTime.isAfter(studentReservation.getCheckInTime())) && (!proposedStartTime.isBefore(studentReservation.getCheckInTime()) || !proposedEndTime.isAfter(alreadyBookedStudentEstimatedEndTime)) && (!proposedStartTime.isAfter(studentReservation.getCheckInTime()) || !proposedEndTime.isBefore(alreadyBookedStudentEstimatedEndTime));
     }
 
+    private Long seatNumberResolver(List<Long> availableSeatsList) {
+        if (libraryConfigurationProperties.getEnableSeatRandomization()) {
+            int randomIndex = new Random().nextInt(availableSeatsList.size());
+            return availableSeatsList.get(randomIndex);
+        }
+        return availableSeatsList.get(0);
+    }
 }

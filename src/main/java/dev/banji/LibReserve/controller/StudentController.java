@@ -1,6 +1,6 @@
 package dev.banji.LibReserve.controller;
 
-import dev.banji.LibReserve.model.dtos.FetchStudentReservationDto;
+import dev.banji.LibReserve.model.dtos.StudentReservationDto;
 import dev.banji.LibReserve.model.enums.ReservationStatus;
 import dev.banji.LibReserve.service.StudentService;
 import lombok.RequiredArgsConstructor;
@@ -21,45 +21,45 @@ public class StudentController {
 
     @GetMapping("/reservation/last")
     @PreAuthorize("hasAuthority('SCOPE_STUDENT')")
-    public FetchStudentReservationDto getLastReservation(Authentication authentication) {
+    public StudentReservationDto getLastReservation(Authentication authentication) {
         return studentService.retrieveLastReservation((String) authentication.getPrincipal());
     }
 
 
     @GetMapping("/reservation/{status}")
     @PreAuthorize("hasAuthority('SCOPE_STUDENT')")
-    public List<FetchStudentReservationDto> fetchReservationsBasedOnStatus(@PathVariable ReservationStatus status, Authentication authentication) {
+    public List<StudentReservationDto> fetchReservationsBasedOnStatus(@PathVariable ReservationStatus status, Authentication authentication) {
         return studentService.fetchReservationsByStatus((String) authentication.getPrincipal(), status);
     }
 
     @GetMapping("/reservation/all")
     @PreAuthorize("hasAuthority('SCOPE_STUDENT')")
-    public List<FetchStudentReservationDto> fetchAllReservations(Authentication authentication) {
+    public List<StudentReservationDto> fetchAllReservations(Authentication authentication) {
         return studentService.fetchAllReservations((String) authentication.getPrincipal());
     }
 
     @PostMapping("/reservation/today/now")
     @PreAuthorize("hasAuthority('SCOPE_STUDENT')")
     public String walkInRequest(JwtAuthenticationToken authentication, @RequestBody Duration duration) {
-        return studentService.handleWalkInRequest((String) authentication.getPrincipal(), duration, authentication.getToken());
+        return studentService.handleWalkInRequest((String) authentication.getPrincipal(), duration);
     }
 
     @PostMapping("/reservation/today")
     @PreAuthorize("hasAuthority('SCOPE_STUDENT')")
     public String reserveForLaterToday(JwtAuthenticationToken authentication, @RequestBody LocalDateTime proposedDateAndTIme, @RequestBody Duration duration) {
-        return studentService.reserveForTodayRequest((String) authentication.getPrincipal(), proposedDateAndTIme, duration, authentication.getToken());
+        return studentService.reserveForTodayRequest((String) authentication.getPrincipal(), proposedDateAndTIme, duration);
     }
 
     @PostMapping("/reservation/advance")
     @PreAuthorize("hasAuthority('SCOPE_STUDENT')")
     public String bookReservationsInAdvance(JwtAuthenticationToken authentication, @RequestBody LocalDateTime proposedDateAndTIme, @RequestBody Duration duration) {
-        return studentService.handleAdvancedRequest((String) authentication.getPrincipal(), proposedDateAndTIme, duration, authentication.getToken());
+        return studentService.handleAdvancedRequest((String) authentication.getPrincipal(), proposedDateAndTIme, duration);
     }
 
     @PostMapping("/reservation/extension")
     @PreAuthorize("hasAuthority('SCOPE_STUDENT')")
-    public String reservationExtension(JwtAuthenticationToken authentication, @RequestBody Duration duration) {
-        return studentService.requestForExtension(authentication, (String) authentication.getPrincipal(), duration);
+    public Boolean reservationExtension(JwtAuthenticationToken authentication, @RequestBody Duration duration) {
+        return studentService.requestForExtension((String) authentication.getPrincipal(), duration);
     }
 
     @PostMapping("/logout")
