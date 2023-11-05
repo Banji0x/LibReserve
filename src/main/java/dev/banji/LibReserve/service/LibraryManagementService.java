@@ -44,7 +44,7 @@ public class LibraryManagementService {
 
                     if (intendedEndTime.isAfter(LocalTime.now())) //meaning time has not being used up...
                     {
-                        notificationService(0, false); //TODO the time difference should be the remaining time in minutes...
+//                        notificationService.sendNotifications(0, false); //TODO the time difference should be the remaining time in minutes...
                         return;
                     }
 
@@ -53,7 +53,7 @@ public class LibraryManagementService {
                     studentReservationRepository.save(studentReservation);
 
                     //remove from the queue
-                    boolean removed = libraryOccupancyQueue.signOutUser(studentDetailDto);
+                    boolean removed = libraryOccupancyQueue.signOutStudent(studentDetailDto);
                     if (!removed) throw new LibraryRuntimeException();
                 });
     }
@@ -79,23 +79,6 @@ public class LibraryManagementService {
             reservation.setReservationStatus(EXPIRED); //meaning booking is now invalid.
             studentReservationRepository.save(reservation);
         });
-    }
-
-    //notification Service when time is almost up...
-    //immediately notification to all students...
-    private void notificationService(int timeLeft, boolean immediately) {
-// Send notifications out. {probably to the Librarian and Student...} //TODO notifications Service
-        if (!libraryConfigurationProperties.getSendNotifications()) return;
-        //alert users
-        if (immediately) {
-
-        }
-        List<Integer> notificationRolloutTimeList = libraryConfigurationProperties.getNotificationTimeListInMinutes();
-        List<Integer> list = notificationRolloutTimeList.stream().filter(notificationTime -> notificationTime.equals(timeLeft)).toList();
-        if (list.isEmpty()) return;
-
-        //send out notifications
-        //write logic here #TODO
     }
 
 }
