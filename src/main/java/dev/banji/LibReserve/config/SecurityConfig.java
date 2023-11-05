@@ -1,9 +1,9 @@
 package dev.banji.LibReserve.config;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import dev.banji.LibReserve.config.filters.JwtAccessTokenBlacklistAuthenticationFilter;
 import dev.banji.LibReserve.config.filters.LibrarianAuthenticationFilter;
 import dev.banji.LibReserve.config.filters.StudentAuthenticationFilter;
-import dev.banji.LibReserve.config.filters.TokenBlacklistAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -15,8 +15,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.SessionManagementConfigurer;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -40,7 +38,7 @@ public class SecurityConfig {
     private final StudentAuthenticationFilter studentAuthenticationFilter;
     @Value("${jwt.key}")
     private String jwtKey;
-    private final TokenBlacklistAuthenticationFilter tokenBlacklistAuthenticationFilter;
+    private final JwtAccessTokenBlacklistAuthenticationFilter jwtAccessTokenBlacklistAuthenticationFilter;
 
     private static void customize(SessionManagementConfigurer<HttpSecurity> sessionManagement) {
         sessionManagement.sessionCreationPolicy(STATELESS);
@@ -72,7 +70,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable) //disable csrf...
                 .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
-                .addFilterAfter(tokenBlacklistAuthenticationFilter, BearerTokenAuthenticationFilter.class)
+                .addFilterAfter(jwtAccessTokenBlacklistAuthenticationFilter, BearerTokenAuthenticationFilter.class)
                 .sessionManagement(SecurityConfig::customize)
                 .build();
     }
@@ -99,12 +97,6 @@ public class SecurityConfig {
         byte[] keyBytes = jwtKey.getBytes();
         SecretKeySpec keySpec = new SecretKeySpec(keyBytes, 0, keyBytes.length, "RSA");
         return NimbusJwtDecoder.withSecretKey(keySpec).macAlgorithm(HS512).build();
-    }
-
-    //Password Encoder
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
 }
