@@ -54,7 +54,7 @@ public class StudentAuthenticationProvider implements AuthenticationProvider {
             var studentDetails = studentUserDetailsService.loadUserByUsername(matricNumber);
             if (!passwordEncoder.matches(rawCredentials, studentDetails.getPassword()))
                 throw new BadCredentialsException("Credentials do not match.");
-            if (!studentDetails.isEnabled()) throw new DisabledException("Account is disabled.");
+            if (!studentDetails.isEnabled()) throw new DisabledException("Student Account is disabled.");
             if (!studentDetails.isAccountNonLocked()) throw new LockedException("Account is locked.");
             return StudentAuthenticationToken.authenticatedToken(studentDetails, studentDetails.getAuthorities());
         } catch (UserNotFoundException studentNotFoundException) {
