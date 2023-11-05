@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
@@ -76,13 +75,13 @@ public class ProjectConfig {
     }
 
     @Bean
-    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
+//    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
     List<Jwt> blackListedJwtTokenList() {
         return new ArrayList<>();
     }
 
     @Bean
-    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
+//    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
     LinkedList<String> libraryWaitingQueue() {
         return new LinkedList<>(); //holds the matric number of the students...
     }
