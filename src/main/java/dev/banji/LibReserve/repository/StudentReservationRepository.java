@@ -13,29 +13,24 @@ public interface StudentReservationRepository extends JpaRepository<StudentReser
 
     List<StudentReservation> findByStudentMatricNumber(String matricNumber);
 
-    List<StudentReservation> findByDateReservationWasMadeForAndStudentMatricNumber(LocalDate madeForDate, String matricNumber);
-
     List<StudentReservation> findByDateReservationWasMadeForAndReservationStatus(LocalDate reservationDate, ReservationStatus reservationStatus);
 
 //    List<Reservation> findByDateReservationWasMadeForAndReservationStatus(LocalDate reservationDate, ReservationStatus reservationStatus);
 
     List<StudentReservation> findByReservationStatusAndStudentMatricNumber(ReservationStatus reservationStatus, String matricNumber);
 
-    Integer findByReservationStatusAndStudentMatricNumberAndDateReservationWasMadeFor(ReservationStatus reservationStatus, String matricNumber, LocalDate madeForDate);
-
-    Optional<StudentReservation> findByReservationCodeAndStudentMatricNumberAndReservationStatus(String reservationCode, String matricNumber, ReservationStatus reservationStatus);
-
     Optional<StudentReservation> findByReservationCodeAndStudentMatricNumber(String reservationCode, String matricNumber);
-
-    boolean findByReservationStatus(ReservationStatus reservationStatus);
 
     List<StudentReservation> findByStudentMatricNumberAndReservationStatus(String matricNumber, ReservationStatus reservationStatus);
 
-    int findByStudentMatricNumberAndMadeForDate(String matricNumber, LocalDate localDate);
+    List<StudentReservation> findByStudentMatricNumberAndDateReservationWasMadeFor(String matricNumber, LocalDate localDate);
 
-    int findByStudentMatricNumberAndMadeForDateAndReservationStatus(String matricNumber, LocalDate localDate, ReservationStatus status);
+    Optional<StudentReservation> findByDateReservationWasMadeForAndStudentMatricNumber(LocalDate localDate, String matricNumber);
+
+    int findByStudentMatricNumberAndDateReservationWasMadeForAndReservationStatus(String matricNumber, LocalDate localDate, ReservationStatus status);
 
     Optional<StudentReservation> findByReservationCode(String reservationCode);
 
-    Optional<StudentReservation> findByReservationCodeAndReservationStatus(String reservationCode, ReservationStatus booked);
+    Optional<StudentReservation> findByReservationCodeAndDateReservationWasMadeFor(String reservationCode, LocalDate now);
+
 }
