@@ -47,5 +47,4 @@ library:
       - 10
       - 5
     enableSeatRandomization: true
-    universityUrl: https://universitywebsite.com
-
+    universityUrl: "https://universitywebsite.com"

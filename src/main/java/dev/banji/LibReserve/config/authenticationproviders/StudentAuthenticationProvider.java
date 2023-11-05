@@ -31,7 +31,7 @@ public class StudentAuthenticationProvider implements AuthenticationProvider {
     private final RestTemplate restTemplate;
     private final StudentRepository studentRepository;
 
-    @Value("${university.url}")
+    @Value("${library.properties.universityUrl}")
     private String universityUrl;
 
     public StudentAuthenticationProvider(UserDetailsService studentUserDetailsService, StudentRepository studentRepository, PasswordEncoder passwordEncoder, RestTemplate restTemplate) {
