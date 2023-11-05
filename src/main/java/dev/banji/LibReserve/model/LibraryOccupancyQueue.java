@@ -1,30 +1,28 @@
 package dev.banji.LibReserve.model;
 
+import dev.banji.LibReserve.config.properties.LibraryConfigurationProperties;
 import dev.banji.LibReserve.exceptions.LibraryClosedException;
-import dev.banji.LibReserve.exceptions.ReservationDoesNotExistException;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.prepost.PreAuthorize;
+import dev.banji.LibReserve.model.dtos.CurrentStudentDetailDto;
+import lombok.Getter;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 
 @Component
-@PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
+//@PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
 public class LibraryOccupancyQueue extends ArrayBlockingQueue<InmemoryUserDetailDto> {
+    private final LibraryConfigurationProperties libraryConfigurationProperties;
+    @Getter
     private final ArrayList<Long> availableSeatNumberList;
-    @Value("{library.properties.enableSeatRandomization}")
-    private Boolean randomizeSeatNumberAllocation;
-    @Value("{library.properties.numberOfSeats}")
-    private Integer numberAvailableOfSeats;
-    private int loggedInLibrariansCount;
 
-    public LibraryOccupancyQueue(Long numberOfSeats) {
-        super(numberOfSeats.intValue());
-        availableSeatNumberList = new ArrayList<>(numberAvailableOfSeats);
-        for (int i = 1; i < numberAvailableOfSeats; i++) { //this is to simply store the available seats...
+
+    public LibraryOccupancyQueue(LibraryConfigurationProperties libraryConfigurationProperties) {
+        super(libraryConfigurationProperties.getNumberOfSeats().intValue());
+        this.libraryConfigurationProperties = libraryConfigurationProperties;
+        availableSeatNumberList = new ArrayList<>();
+        for (int i = 1; i < libraryConfigurationProperties.getNumberOfSeats().intValue(); i++) { //this is to simply store the available seats...
             availableSeatNumberList.add((long) i);
         }
     }
@@ -34,25 +32,26 @@ public class LibraryOccupancyQueue extends ArrayBlockingQueue<InmemoryUserDetail
     }
 
     public void updateLoggedInLibrarianCount() {
-        ++loggedInLibrariansCount; //TODO still needs work...
+//        ++loggedInLibrariansCount; //TODO still needs work...
     }
 
-    public synchronized Long isLibraryFull() { //check if library is currently filled up at that moment
+    public synchronized void isLibraryFull() { //check if library is currently filled up at that moment
         if (remainingCapacity() <= 0) throw LibraryClosedException.LibraryMaximumLimitReached();
-        if (randomizeSeatNumberAllocation)
-            return randomSeatNumber(availableSeatNumberList);
-        return availableSeatNumberList.get(0);
     }
 
-    private Long randomSeatNumber(List<Long> availableSeatsList) {
-        int randomIndex = new Random().nextInt(availableSeatsList.size());
-        return availableSeatsList.get(randomIndex);
-    }
-
-    public synchronized boolean signOutUser(InmemoryUserDetailDto inmemoryUserDetailDto) {
+    private synchronized boolean signOutUser(InmemoryUserDetailDto inmemoryUserDetailDto) {
         boolean seatFreedUp = freeUpSeat(inmemoryUserDetailDto.getSeatNumber());
         boolean removed = this.removeIf(inMemoryUserDetail -> inMemoryUserDetail.equals(inmemoryUserDetailDto));
         return removed && seatFreedUp;
+    }
+
+    /**
+     * This is just a helper method...
+     *
+     * @return true if operation is successful. else false.
+     */
+    public synchronized boolean signOutStudent(CurrentStudentDetailDto studentDetailDto) {
+        return signOutUser(studentDetailDto);
     }
 
     private synchronized boolean signInUser(InmemoryUserDetailDto userDetailDto) {
@@ -68,11 +67,22 @@ public class LibraryOccupancyQueue extends ArrayBlockingQueue<InmemoryUserDetail
         return signInUser(userDetailDto);
     }
 
-    public synchronized Reservation hasASession(String placeHolder) {
-        List<Reservation> reservationList = stream().filter(userDetail -> userDetail.getIdentifier().equals(placeHolder)).map(InmemoryUserDetailDto::getReservation).toList();
-        if (reservationList.size() == 0) //user is not in library...
-            throw new ReservationDoesNotExistException();
-        return reservationList.get(0);
+    public synchronized Optional<Reservation> isUserPresentInLibrary(String placeHolder) {
+        return stream()
+                .filter(userDetail -> userDetail.getIdentifier().equals(placeHolder))
+                .map(InmemoryUserDetailDto::getReservation).findFirst();
+    }
+
+    /**
+     * This method *only* accepts a reservationCode
+     *
+     * @param reservationCode - the reservation code
+     * @return Optional<StudentReservation>
+     */
+    public synchronized Optional<StudentReservation> isStudentPresentInLibrary(String reservationCode) {
+        return stream()
+                .filter(userDetail -> ((CurrentStudentDetailDto) userDetail).getReservationCode().equals(reservationCode))
+                .map(inmemoryUserDetailDto -> (StudentReservation) inmemoryUserDetailDto.getReservation()).findFirst();
     }
 
     public ArrayList<InmemoryUserDetailDto> fetchOccupancyQueueAsList() {
@@ -81,7 +91,8 @@ public class LibraryOccupancyQueue extends ArrayBlockingQueue<InmemoryUserDetail
 
     private boolean freeUpSeat(Long seatNumber) { //add seat back to list...
         if (!availableSeatNumberList.contains(seatNumber))
-            return availableSeatNumberList.add((long) seatNumber);
+            return availableSeatNumberList.add(seatNumber);
         return false;
     }
+
 }
