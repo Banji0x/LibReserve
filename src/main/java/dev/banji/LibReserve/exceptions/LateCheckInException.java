@@ -5,4 +5,7 @@ public class LateCheckInException extends LibraryRuntimeException {
         super();
     }
 
+    public LateCheckInException(String message) {
+        super(message);
+    }
 }
