@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -46,7 +45,6 @@ public class SecurityConfig {
 
     //Security Filter Chain Configuration
     @Bean
-    @Order(1)
     public SecurityFilterChain JWTTokenGeneratorFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .securityMatcher("/api/lib-reserve/token/student", "/api/lib-reserve/token/librarian")
@@ -63,7 +61,6 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .securityMatcher("/api/lib-reserve/student/**", "/api/lib-reserve/librarian/**")
@@ -76,7 +73,6 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Order(3)
     public SecurityFilterChain h2ConsoleSecurityChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .securityMatcher(AntPathRequestMatcher.antMatcher("/h2-console/**"))

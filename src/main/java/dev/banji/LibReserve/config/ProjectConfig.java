@@ -2,6 +2,7 @@ package dev.banji.LibReserve.config;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.banji.LibReserve.config.properties.LibraryConfigurationProperties;
 import dev.banji.LibReserve.config.tokens.LibrarianAuthenticationToken;
 import dev.banji.LibReserve.config.tokens.StudentAuthenticationToken;
 import dev.banji.LibReserve.config.userDetails.LibrarianSecurityDetails;
@@ -12,7 +13,7 @@ import dev.banji.LibReserve.model.dtos.LibrarianLoginDetailsDto;
 import dev.banji.LibReserve.model.dtos.StudentLoginDetailsDto;
 import dev.banji.LibReserve.repository.LibrarianRepository;
 import dev.banji.LibReserve.repository.StudentRepository;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -36,13 +37,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Configuration
+@RequiredArgsConstructor
 public class ProjectConfig {
-    @Value("${library.properties.numberOfSeats}")
-    private Long numberOfSeats;
-    @Value("${library.properties.readTimeoutInSeconds}")
-    private Long readTimeoutInSeconds;
-    @Value("${library.properties.connectTimeoutInSeconds}")
-    private Long connectTimeoutInSeconds;
+    private final LibraryConfigurationProperties libraryConfigurationProperties;
 
     //Request Matchers
     @Bean
@@ -153,8 +150,8 @@ public class ProjectConfig {
     @Bean
     public RestTemplate restTemplate() {
         var factory = new SimpleClientHttpRequestFactory();
-        factory.setReadTimeout((int) (readTimeoutInSeconds * 1000));
-        factory.setConnectTimeout((int) (connectTimeoutInSeconds * 1000));
+        factory.setReadTimeout((int) (libraryConfigurationProperties.getReadTimeoutInSeconds() * 1000));
+        factory.setConnectTimeout((int) (libraryConfigurationProperties.getConnectTimeoutInSeconds() * 1000));
         return new RestTemplate(factory);
     }
 
