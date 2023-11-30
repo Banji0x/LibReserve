@@ -28,6 +28,12 @@ Spring:
       enabled: true
       path: /h2-console
 
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
+
 library:
   properties:
     acceptingBookings: true

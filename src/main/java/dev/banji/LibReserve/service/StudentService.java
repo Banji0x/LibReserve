@@ -43,7 +43,7 @@ public class StudentService {
             throw LibraryClosedException.LibraryNotOperationalException();
 
         //check if library has an available seat for the proposed time...
-        Long availableSeat = internalReservationHandler(matricNumber, duration, isWalkInAccess, proposedDateAndTime, isTodayBooking);
+        Long availableSeat = internalReservationResolver(matricNumber, duration, isWalkInAccess, proposedDateAndTime, isTodayBooking);
 
         //check if the time is higher than permitted
         if (duration.toMinutes() > libraryConfigurationProperties.getBookingTimeAllowedInMinutes())
@@ -182,7 +182,7 @@ public class StudentService {
         return true;
     }
 
-    private Long internalReservationHandler(String matricNumber, Duration duration, Boolean walkInAccess, LocalDateTime proposedDateAndTime, Boolean todayBooking) {
+    private Long internalReservationResolver(String matricNumber, Duration duration, Boolean walkInAccess, LocalDateTime proposedDateAndTime, Boolean todayBooking) {
 
         if (walkInAccess) { //TODO maybe implement an internal Reservation Resolver...
             //If student want's access right away
