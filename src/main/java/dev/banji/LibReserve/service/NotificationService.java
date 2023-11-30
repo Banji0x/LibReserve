@@ -1,31 +1,41 @@
 package dev.banji.LibReserve.service;
 
-import dev.banji.LibReserve.config.properties.LibraryConfigurationProperties;
-import dev.banji.LibReserve.exceptions.DisabledNotificationException;
+import dev.banji.LibReserve.model.dtos.Message;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class NotificationService {
-    private final LibraryConfigurationProperties libraryConfigurationProperties;
+//@Conditional(NotificationCondition.class)
+public class NotificationService { //TODO validation also has to be done to ensure the place holders match a regex
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public Boolean sendNotifications(int timeLeft, boolean immediately) {
-// Send notifications out. {probably to the Librarian and Student...} //TODO notifications Service
-        if (!libraryConfigurationProperties.getSendNotifications())
-            throw new DisabledNotificationException();
-        //alert users
-        if (immediately) {
-
-        }
-        List<Integer> notificationRolloutTimeList = libraryConfigurationProperties.getNotificationTimeListInMinutes();
-        List<Integer> list = notificationRolloutTimeList.stream().filter(notificationTime -> notificationTime.equals(timeLeft)).toList();
-//        if (list.isEmpty()) return;
-
-        //send out notifications
-        //write logic here #TODO
-        return false;
+    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
+    public void sendToAllLoggedInUsers(@Payload Message message) { //TODO make sure this current logged in user is not included
+        messagingTemplate.convertAndSend("/notifications", message.message());
     }
+
+    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
+    public void sendToAllLibrarians(@Payload Message message) {
+        messagingTemplate.convertAndSend("/notifications/librarians", message.message());
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
+    public void sendToLibrarian(@Payload Message message) {
+        messagingTemplate.convertAndSendToUser(message.identifier(), "/notifications/librarians", message.message());
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
+    public void sendToStudent(@Payload Message message) {
+        messagingTemplate.convertAndSendToUser(message.identifier(), "/notifications/students", message.message());
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
+    public void sendToAllStudents(@Payload Message message) {
+        messagingTemplate.convertAndSend("/notifications/students", message.message());
+    }
+
 }
