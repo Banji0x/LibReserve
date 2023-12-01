@@ -69,6 +69,11 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
         <!--         swagger for api documentation and rest client generation-->
         <dependency>
             <groupId>io.springfox</groupId>
