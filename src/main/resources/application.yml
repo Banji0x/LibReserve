@@ -6,8 +6,6 @@ jwt:
   key: 3s4wk395383aka893948938zd8u0499a93jz9Anb949wi3ju982n387587za832bau384l384ha7293
   expirationTime: 120
 
-
-
 server:
   port: 8080
 
@@ -15,6 +13,18 @@ Spring:
   application:
     name:
       LibReserve
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: your-gmail-username@gmail.com
+    password: your-gmail-password
+    properties:
+      smtp:
+      auth:
+        true
+      starttls:
+        enable: true
 
   jpa:
     hibernate:
@@ -47,6 +57,7 @@ library:
     allowEarlyCheckIn: true
     allowedEarlyCheckInMinutes: 5
     sendNotifications: true
+    sendEmails: true
     readTimeoutInSeconds: 10
     connectTimeoutInSeconds: 10
     reserveLibrarianSeat: true

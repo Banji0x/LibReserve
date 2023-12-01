@@ -26,6 +26,7 @@ public final class LibraryConfigurationProperties {
     private Boolean allowEarlyCheckIn;
     private Long allowedEarlyCheckInMinutes; //this should be above the recommendedCheckIn time.
     private Boolean sendNotifications;
+    private Boolean sendEmails;
     private List<Integer> notificationTimeListInMinutes;
     private Long readTimeoutInSeconds;
     private Long connectTimeoutInSeconds;
@@ -40,7 +41,7 @@ public final class LibraryConfigurationProperties {
     private Boolean allowMultipleTimeExtension;
 
     @ConstructorBinding
-    public LibraryConfigurationProperties(String universityUrl, Boolean acceptingBookings, Long bookingTimeAllowedInMinutes, Long recommendedCheckInTime, Long numberOfSeats, Boolean allowTimeExtension, Long maximumTimeExtensionAllowedInMinutes, Boolean allowLateCheckIn, Long allowedLateCheckInTimeInMinutes, Boolean allowEarlyCheckIn, Long allowedEarlyCheckInMinutes, Boolean sendNotifications, List<Integer> notificationTimeListInMinutes, Long readTimeoutInSeconds, Long connectTimeoutInSeconds, Set<AllowedFaculties> setOfAllowedFaculties, Boolean enableSeatRandomization, Boolean allowMultipleBookings, Boolean allowAdvancedBookings, Integer maximumLimitPerDay, Boolean enableLimitPerDay, Boolean reserveLibrarianSeat, Long numberOfLibrarians, Boolean allowMultipleTimeExtension) {
+    public LibraryConfigurationProperties(String universityUrl, Boolean acceptingBookings, Long bookingTimeAllowedInMinutes, Long recommendedCheckInTime, Long numberOfSeats, Boolean allowTimeExtension, Long maximumTimeExtensionAllowedInMinutes, Boolean allowLateCheckIn, Long allowedLateCheckInTimeInMinutes, Boolean allowEarlyCheckIn, Long allowedEarlyCheckInMinutes, Boolean sendNotifications, List<Integer> notificationTimeListInMinutes, Long readTimeoutInSeconds, Long connectTimeoutInSeconds, Set<AllowedFaculties> setOfAllowedFaculties, Boolean enableSeatRandomization, Boolean allowMultipleBookings, Boolean allowAdvancedBookings, Integer maximumLimitPerDay, Boolean enableLimitPerDay, Boolean reserveLibrarianSeat, Long numberOfLibrarians, Boolean allowMultipleTimeExtension, Boolean sendEmails) {
         this.universityUrl = universityUrl;
         this.acceptingBookings = acceptingBookings;
         this.bookingTimeAllowedInMinutes = bookingTimeAllowedInMinutes;
@@ -53,6 +54,7 @@ public final class LibraryConfigurationProperties {
         this.allowEarlyCheckIn = allowEarlyCheckIn;
         this.allowedEarlyCheckInMinutes = allowedEarlyCheckInMinutes;
         this.sendNotifications = sendNotifications;
+        this.sendEmails = sendEmails;
         this.notificationTimeListInMinutes = notificationTimeListInMinutes;
         this.readTimeoutInSeconds = readTimeoutInSeconds;
         this.connectTimeoutInSeconds = connectTimeoutInSeconds;
