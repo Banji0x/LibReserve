@@ -56,14 +56,17 @@ library:
     allowed-late-check-in-time-in-minutes: 10
     allowEarlyCheckIn: true
     allowedEarlyCheckInMinutes: 5
-    sendNotifications: true
-    sendEmails: true
+    sendNotifications:
+      enabled: true
+      viaWeb: true
+      viaMail: true
+    sendMessagesViaEmail: true
     readTimeoutInSeconds: 10
     connectTimeoutInSeconds: 10
     reserveLibrarianSeat: true
-    notificationTimeListInMinutes:
-      - 30
-      - 10
-      - 5
+    notificationList:
+      - timeLeft:
+        message:
+
     enableSeatRandomization: true
-    universityUrl: "https://universitywebsite.com"
+    universityUrl: https://universitywebsite.com
