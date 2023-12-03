@@ -27,7 +27,7 @@ public interface StudentReservationRepository extends JpaRepository<StudentReser
 
     Optional<StudentReservation> findByDateReservationWasMadeForAndStudentMatricNumber(LocalDate localDate, String matricNumber);
 
-    int findByStudentMatricNumberAndDateReservationWasMadeForAndReservationStatus(String matricNumber, LocalDate localDate, ReservationStatus status);
+    int countByStudentMatricNumberAndDateReservationWasMadeFor(String matricNumber, LocalDate localDate);
 
     Optional<StudentReservation> findByReservationCode(String reservationCode);
 

@@ -84,10 +84,9 @@ public class StudentService {
 
     public Boolean requestForExtension(String matricNumber, Duration extensionDuration) {
         //fetch reservation...
-        StudentReservation reservation = (StudentReservation) libraryOccupancyQueue.isUserPresentInLibrary(matricNumber)
-                .orElseThrow(() -> {
-                    throw new StudentNotInLibraryException();
-                });
+        StudentReservation reservation = (StudentReservation) libraryOccupancyQueue.isUserPresentInLibrary(matricNumber).orElseThrow(() -> {
+            throw new StudentNotInLibraryException();
+        });
 
         if (!libraryConfigurationProperties.getAllowTimeExtension()) // if time extensionDuration is not allowed
             throw new TimeExtensionNotPermittedException();
@@ -121,7 +120,7 @@ public class StudentService {
         StudentReservation reservation = (StudentReservation) libraryOccupancyQueue.isUserPresentInLibrary(matricNumber).orElseThrow(() -> {
             throw new StudentNotInLibraryException();
         });
-        reservation.setReservationStatus(CHECKED_OUT);
+        reservation.setReservationStatus(STUDENT_CHECKED_OUT);
         reservation.setCheckOutDateAndTime(LocalDateTime.now());
         studentReservationRepository.save(reservation);
         return libraryOccupancyQueue.signOutStudent(new CurrentStudentDetailDto(matricNumber, reservation));
@@ -196,8 +195,8 @@ public class StudentService {
             //Check if Student is in currently in the library
             libraryOccupancyQueue.isUserPresentInLibrary(matricNumber);
 
-            //Check if student already has multiple bookings for that day and if student has reached the maximum limit already.
-            int numberOfBookings = multipleBookingsCheck(matricNumber, LocalDate.now(), CHECKED_OUT);
+            //Check if student already has reservations for that day and if there is a maximum limit
+            int numberOfBookings = multipleReservationsCheck(matricNumber, LocalDate.now());
             maximumLimitCheck(numberOfBookings);
 
             //return an available seat number...
@@ -212,7 +211,7 @@ public class StudentService {
                 throw new ReservationNotForTodayException();
 
             // Check if student already has multiple bookings for today and if student has reached the maximum limit already
-            int numberOfBookings = multipleBookingsCheck(matricNumber, LocalDate.now(), CHECKED_OUT);
+            int numberOfBookings = multipleReservationsCheck(matricNumber, LocalDate.now());
             maximumLimitCheck(numberOfBookings);
 
             //check the time the student is requesting for access...check if there are is an overlap...
@@ -262,7 +261,7 @@ public class StudentService {
             List<StudentReservation> studentReservationList = studentReservationRepository.findByDateReservationWasMadeForAndReservationStatus(proposedDateAndTime.toLocalDate(), BOOKED).stream().toList();
 
             // Check if student already has multiple bookings for that day and if student has reached the maximum limit already.
-            int numberOfBookings = multipleBookingsCheck(matricNumber, proposedDateAndTime.toLocalDate(), BOOKED);
+            int numberOfBookings = multipleReservationsCheck(matricNumber, proposedDateAndTime.toLocalDate());
             maximumLimitCheck(numberOfBookings);
 
             //check a reservation that does not overlap the existing reservation can be made ...
@@ -279,9 +278,9 @@ public class StudentService {
         }
     }
 
-    private int multipleBookingsCheck(String matricNumber, LocalDate localDate, ReservationStatus status) {
-        int reservationCount = studentReservationRepository.findByStudentMatricNumberAndDateReservationWasMadeForAndReservationStatus(matricNumber, localDate, status);
-        if (!libraryConfigurationProperties.getAllowMultipleBookings() && reservationCount >= 1)
+    private int multipleReservationsCheck(String matricNumber, LocalDate localDate) {
+        int reservationCount = studentReservationRepository.countByStudentMatricNumberAndDateReservationWasMadeFor(matricNumber, localDate);
+        if (!libraryConfigurationProperties.getAllowMultipleReservations() && reservationCount >= 1)
             throw new MultipleBookingException();
         return reservationCount;
     }

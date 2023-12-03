@@ -5,8 +5,11 @@ public enum ReservationStatus {
     TIME_EXTENDED,
     WAITING,
     BOOKED,
-    CHECKED_OUT, // when the student checked out himself...
-    CANCELLED, //when the student cancels the reservation...
+    CANCELLED, //when the student cancels the reservation made..
     EXPIRED, //when a token has expired due to late check-in or time exhaustion.
-    BLACKLISTED //when the user was kicked out of the library
+    STUDENT_CHECKED_OUT,
+    LIBRARIAN_CHECKED_OUT,
+    SYSTEM_CHECKED_OUT,
+    BLACKLISTED  //when the user was kicked out of the library
+
 }
