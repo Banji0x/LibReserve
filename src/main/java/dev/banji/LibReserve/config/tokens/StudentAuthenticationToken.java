@@ -43,6 +43,10 @@ public class StudentAuthenticationToken extends AbstractAuthenticationToken {
         return principal;
     }
 
+    public String getMatricNumber() {
+        return ((StudentSecurityDetails) principal).getMatricNumber();
+    }
+
     @Override
     public boolean implies(Subject subject) {
         return super.implies(subject);

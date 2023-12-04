@@ -43,6 +43,10 @@ public class LibrarianAuthenticationToken extends AbstractAuthenticationToken {
         return this.principal;
     }
 
+    public String getStaffNumber() {
+        return ((LibrarianSecurityDetails) principal).getStaffNumber();
+    }
+
     @Override
     public boolean implies(Subject subject) {
         return super.implies(subject);

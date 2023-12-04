@@ -33,6 +33,10 @@ public class LibrarianSecurityDetails implements UserDetails {
         return librarian.getFirstName() + " " + librarian.getLastName();
     }
 
+    public String getStaffNumber() {
+        return librarian.getStaffNumber();
+    }
+
     @Override
     public boolean isAccountNonExpired() {
         return true;
