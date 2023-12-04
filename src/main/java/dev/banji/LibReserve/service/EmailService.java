@@ -1,12 +1,11 @@
 package dev.banji.LibReserve.service;
 
-import dev.banji.LibReserve.config.conditions.EmailServiceCondition;
 import dev.banji.LibReserve.model.dtos.EmailMessageDto.BulkEmailMessageDto;
 import dev.banji.LibReserve.model.dtos.EmailMessageDto.SingleEmailMessageDto;
 import dev.banji.LibReserve.model.dtos.EmailNotificationDto.BulkEmailNotificationDto;
 import dev.banji.LibReserve.model.dtos.EmailNotificationDto.SingleEmailNotificationDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -14,7 +13,7 @@ import org.springframework.validation.annotation.Validated;
 
 @Service
 @RequiredArgsConstructor
-@Conditional(EmailServiceCondition.class)
+@ConditionalOnExpression("${library.properties.sendNotifications.viaMail} or ${library.properties.sendMessagesViaEmail}")
 public class EmailService {
     private final JavaMailSender javaMailSender;
 
@@ -27,9 +26,7 @@ public class EmailService {
     }
 
     public void sendEmailMessage(@Validated BulkEmailMessageDto bulkEmail) {
-        bulkEmail.getTo().forEach(address -> {
-            sendEmailMessage(new SingleEmailMessageDto(address, bulkEmail.getSubject(), bulkEmail.getBody()));
-        });
+        bulkEmail.getTo().forEach(address -> sendEmailMessage(new SingleEmailMessageDto(address, bulkEmail.getSubject(), bulkEmail.getBody())));
     }
 
     public void sendEmailNotification(SingleEmailNotificationDto singleEmailNotification) {
