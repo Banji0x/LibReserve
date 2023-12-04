@@ -52,6 +52,10 @@ public class LibraryOccupancyQueue extends ArrayBlockingQueue<InmemoryUserDetail
         return signOutUser(studentDetailDto);
     }
 
+    public synchronized boolean signOutLibrarian(CurrentLibrarianDetailDto librarianDetailDto) {
+        return signOutUser(librarianDetailDto);
+    }
+
     private synchronized boolean signInUser(InmemoryUserDetailDto userDetailDto) {
         return add(userDetailDto);
     }
