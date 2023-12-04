@@ -21,7 +21,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.stream.LongStream;
 
 import static dev.banji.LibReserve.model.enums.ReservationStatus.*;
@@ -43,8 +42,12 @@ public class StudentService {
             throw LibraryClosedException.LibraryNotOperationalException();
 
         //check if library has an available seat for the proposed time...
-        Long availableSeat = internalReservationResolver(matricNumber, duration, isWalkInAccess, proposedDateAndTime, isTodayBooking);
-
+        Optional<Long> availableSeatOptional = internalReservationResolver(matricNumber, duration, isWalkInAccess, proposedDateAndTime, isTodayBooking);
+        if (availableSeatOptional.isEmpty()) {
+            throw new NoSpotAvailableException();
+            //TODO why not simple send a notification asking if he/she want's to be placed in a waiting queue pending when a spot opens up or maybe book for another time...
+            //TODO maybe rather than throwing an exception,
+        }
         //check if the time is higher than permitted
         if (duration.toMinutes() > libraryConfigurationProperties.getBookingTimeAllowedInMinutes())
             throw new BookingTimeExceedsLimitException(libraryConfigurationProperties.getBookingTimeAllowedInMinutes());
@@ -58,7 +61,7 @@ public class StudentService {
         });
 
         //create reservation...
-        StudentReservation studentReservation = StudentReservation.builder().checkInTime(proposedDateAndTime.toLocalTime()).seatNumber(availableSeat).intendedStay(duration).reservationCreationDate(LocalDate.now()).reservationCreationTime(LocalTime.now()).dateReservationWasMadeFor(proposedDateAndTime.toLocalDate()).timeReservationWasMadeFor(proposedDateAndTime.toLocalTime()).reservationStatus(BOOKED).student(student).reservationCode(generatedReservationCode).build();
+        StudentReservation studentReservation = StudentReservation.builder().checkInTime(proposedDateAndTime.toLocalTime()).seatNumber(availableSeatOptional.get()).intendedStay(duration).reservationCreationDate(LocalDate.now()).reservationCreationTime(LocalTime.now()).dateReservationWasMadeFor(proposedDateAndTime.toLocalDate()).timeReservationWasMadeFor(proposedDateAndTime.toLocalTime()).reservationStatus(BOOKED).student(student).reservationCode(generatedReservationCode).build();
 
         //persist to db...
         student.getStudentReservationList().add(studentReservation);
@@ -181,7 +184,7 @@ public class StudentService {
         return true;
     }
 
-    private Long internalReservationResolver(String matricNumber, Duration duration, Boolean walkInAccess, LocalDateTime proposedDateAndTime, Boolean todayBooking) {
+    private Optional<Long> internalReservationResolver(String matricNumber, Duration duration, Boolean walkInAccess, LocalDateTime proposedDateAndTime, Boolean todayBooking) {
 
         if (walkInAccess) { //TODO maybe implement an internal Reservation Resolver...
             //If student want's access right away
@@ -200,7 +203,7 @@ public class StudentService {
             maximumLimitCheck(numberOfBookings);
 
             //return an available seat number...
-            return seatNumberResolver(libraryOccupancyQueue.getAvailableSeatNumberList());
+            return libraryOccupancyQueue.seatNumberResolver(libraryOccupancyQueue.getInternalAvailableSeatNumberList(), false);
 
         } else if (todayBooking) {
             LocalTime proposedStartTime = proposedDateAndTime.toLocalTime();
@@ -224,25 +227,21 @@ public class StudentService {
             //this condition might be rarely triggered because it uses the size of the reservationList for today.
             if (bookedReservationForTodayList.size() < libraryConfigurationProperties.getNumberOfSeats()) {
                 List<Long> availableSeatsList = LongStream.rangeClosed(1, libraryConfigurationProperties.getNumberOfSeats()).filter(seat -> bookedReservationForTodayList.stream().noneMatch(reservation -> reservation.getSeatNumber() == seat)).boxed().toList();
-                return seatNumberResolver(availableSeatsList);
+                return libraryOccupancyQueue.seatNumberResolver(availableSeatsList, false);
             }
 
             //since the number of bookings for that day is higher than total number of available seats,
             //then check if it's possible to find a spot without overlapping an existing reservation...
             var availableSeatNumberList = bookedReservationForTodayList.stream().filter(reservation -> checkForOverlap(proposedStartTime, reservation, proposedEndTime)).toList();
             if (!availableSeatNumberList.isEmpty())
-                return seatNumberResolver(availableSeatNumberList.stream().mapToLong(Reservation::getSeatNumber).boxed().toList());
+                return libraryOccupancyQueue.seatNumberResolver(availableSeatNumberList.stream().mapToLong(Reservation::getSeatNumber).boxed().toList(), false);
 
             //finally if it's none of the conditions above match, then check the current occupancy list for a spot that won't overlap...
             //since there might be a spot available since the search earlier was done using the reservation status as "BOOKED"
             availableSeatNumberList = currentOccupancyList.stream().filter(reservation -> checkForOverlap(proposedStartTime, reservation, proposedEndTime)).toList();
 
             if (!availableSeatNumberList.isEmpty())
-                return seatNumberResolver(availableSeatNumberList.stream().mapToLong(Reservation::getSeatNumber).boxed().toList());
-
-            throw new NoSpotAvailableException();
-            //TODO maybe rather than throwing an exception,
-            //TODO why not simple send a notification asking if he/she want's to be placed in a waiting queue pending when a spot opens up or maybe book for another time...
+                return libraryOccupancyQueue.seatNumberResolver(availableSeatNumberList.stream().mapToLong(Reservation::getSeatNumber).boxed().toList(), false);
         } else {
             //meaning not today tomorrow and onwards...
             //make sure you verify it's an advanced date and not a past date...
@@ -269,13 +268,10 @@ public class StudentService {
 
             if (!reservationList.isEmpty()) {
                 List<Long> availableSeatList = LongStream.rangeClosed(1, libraryConfigurationProperties.getNumberOfSeats()).filter(seat -> reservationList.stream().noneMatch(reservation -> reservation.getSeatNumber() == seat)).boxed().toList();
-                return seatNumberResolver(availableSeatList);
+                return libraryOccupancyQueue.seatNumberResolver(availableSeatList, false);
             }
-
-            throw new NoSpotAvailableException();
-            //TODO maybe rather than throwing an exception,
-            //TODO why not simple send a notification asking if he/she want's to be placed in a waiting queue pending when a spot opens up or maybe book for another time...
         }
+        return Optional.empty();
     }
 
     private int multipleReservationsCheck(String matricNumber, LocalDate localDate) {
@@ -300,11 +296,4 @@ public class StudentService {
         return (!proposedStartTime.isBefore(alreadyBookedStudentEstimatedEndTime) || !proposedEndTime.isAfter(studentReservation.getCheckInTime())) && (!proposedStartTime.isBefore(studentReservation.getCheckInTime()) || !proposedEndTime.isAfter(alreadyBookedStudentEstimatedEndTime)) && (!proposedStartTime.isAfter(studentReservation.getCheckInTime()) || !proposedEndTime.isBefore(alreadyBookedStudentEstimatedEndTime));
     }
 
-    private Long seatNumberResolver(List<Long> availableSeatsList) {
-        if (libraryConfigurationProperties.getEnableSeatRandomization()) {
-            int randomIndex = new Random().nextInt(availableSeatsList.size());
-            return availableSeatsList.get(randomIndex);
-        }
-        return availableSeatsList.get(0);
-    }
 }

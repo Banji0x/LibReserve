@@ -7,7 +7,9 @@ import lombok.Getter;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 
 @Component
@@ -15,22 +17,24 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class LibraryOccupancyQueue extends ArrayBlockingQueue<InmemoryUserDetailDto> {
     @Getter
     private final ArrayList<Long> availableSeatNumberList;
+    private final LibraryConfigurationProperties libraryConfigurationProperties;
 
 
     public LibraryOccupancyQueue(LibraryConfigurationProperties libraryConfigurationProperties) {
         super(libraryConfigurationProperties.getNumberOfSeats().intValue());
+        this.libraryConfigurationProperties = libraryConfigurationProperties;
         availableSeatNumberList = new ArrayList<>();
         for (int i = 1; i < libraryConfigurationProperties.getNumberOfSeats().intValue(); i++) { //this is to simply store the available seats...
             availableSeatNumberList.add((long) i);
         }
     }
 
-    public synchronized boolean isEmpty() {
-        return size() == 0;
+    public synchronized boolean isSeatTaken(Long seatNumber) {
+        return !internalAvailableSeatNumberList.contains(seatNumber);
     }
 
-    public void updateLoggedInLibrarianCount() {
-//        ++loggedInLibrariansCount; //TODO still needs work...
+    public synchronized boolean isEmpty() {
+        return size() == 0;
     }
 
     public synchronized void isLibraryFull() { //check if library is currently filled up at that moment
@@ -64,9 +68,8 @@ public class LibraryOccupancyQueue extends ArrayBlockingQueue<InmemoryUserDetail
         return signInUser(userDetailDto);
     }
 
-    public synchronized boolean signInLibrarian(InmemoryUserDetailDto userDetailDto) {
-        updateLoggedInLibrarianCount();
-        return signInUser(userDetailDto);
+    public synchronized void signInLibrarian(InmemoryUserDetailDto userDetailDto) {
+        signInUser(userDetailDto);
     }
 
     public synchronized Optional<Reservation> isUserPresentInLibrary(String placeHolder) {
@@ -97,4 +100,36 @@ public class LibraryOccupancyQueue extends ArrayBlockingQueue<InmemoryUserDetail
         return false;
     }
 
+    public Optional<Long> seatNumberResolver(List<Long> seatList, boolean isLibrarian) {
+        boolean randomizeSeatsAllocation = libraryConfigurationProperties.getEnableSeatRandomization();
+        List<Long> availableSeatList = seatList.stream().filter(seat -> !isSeatTaken(seat)).toList();
+
+        if (isLibrarian) {
+            if (seatList.isEmpty()) { //base condition
+                return Optional.empty();
+            }
+            if (availableSeatList.isEmpty()) { //recursive condition
+                //then check the general list...
+                seatNumberResolver(internalAvailableSeatNumberList, true);
+            }
+        }
+
+        if (randomizeSeatsAllocation) {
+            int randomIndex = new Random().nextInt(availableSeatList.size());
+            Long seatNumber = availableSeatList.get(randomIndex);
+            //update internal available seat list
+            removeSeatFromList(seatNumber);
+            return Optional.of(seatNumber);
+        }
+        Long seatNumber = availableSeatList.get(0);
+        //update internal available seat list
+        removeSeatFromList(seatNumber);
+        return Optional.of(seatNumber);
+
+    }
+
+
+    private void removeSeatFromList(Long seatNumber) {
+        internalAvailableSeatNumberList.removeIf(seat -> seat.equals(seatNumber));
+    }
 }
