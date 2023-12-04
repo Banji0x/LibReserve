@@ -133,20 +133,20 @@ public class StudentService {
             throw new ReservationDoesNotExistException();
         });
 
-        return StudentReservationDto.builder().seatNumber(studentReservation.getSeatNumber()).reservationCreationDateTime(LocalDateTime.of(studentReservation.getReservationCreationDate(), studentReservation.getReservationCreationTime())).intendedUsageDateTime(LocalDateTime.of(studentReservation.getDateReservationWasMadeFor(), studentReservation.getTimeReservationWasMadeFor())).intendedStay(studentReservation.getIntendedStay()).checkOutDateAndTime(studentReservation.getCheckOutDateAndTime()).reservationStatus(studentReservation.getReservationStatus()).matricNumber(matricNumber).stayExtended(studentReservation.isStayExtended()).totalExtensionDuration(studentReservation.getTotalExtensionDuration()).build();
+        return new StudentReservationDto(studentReservation);
 
     }
 
     public List<StudentReservationDto> fetchAllReservations(String matricNumber) {
         List<StudentReservation> reservationList = studentReservationRepository.findByStudentMatricNumber(matricNumber);
         if (reservationList.isEmpty()) throw new ReservationDoesNotExistException();
-        return reservationList.stream().map(studentReservation -> StudentReservationDto.builder().seatNumber(studentReservation.getSeatNumber()).reservationCreationDateTime(LocalDateTime.of(studentReservation.getReservationCreationDate(), studentReservation.getReservationCreationTime())).intendedUsageDateTime(LocalDateTime.of(studentReservation.getDateReservationWasMadeFor(), studentReservation.getTimeReservationWasMadeFor())).intendedStay(studentReservation.getIntendedStay()).checkOutDateAndTime(studentReservation.getCheckOutDateAndTime()).reservationStatus(studentReservation.getReservationStatus()).matricNumber(studentReservation.getStudent().getMatricNumber()).stayExtended(studentReservation.isStayExtended()).totalExtensionDuration(studentReservation.getTotalExtensionDuration()).build()).toList();
+        return reservationList.stream().map(StudentReservationDto::new).toList();
     }
 
     public List<StudentReservationDto> fetchReservationsByStatus(String matricNumber, ReservationStatus reservationStatus) {
         var reservationList = studentReservationRepository.findByReservationStatusAndStudentMatricNumber(reservationStatus, matricNumber);
         if (reservationList.isEmpty()) throw new ReservationDoesNotExistException();
-        return reservationList.stream().map(studentReservation -> StudentReservationDto.builder().seatNumber(studentReservation.getSeatNumber()).reservationCreationDateTime(LocalDateTime.of(studentReservation.getReservationCreationDate(), studentReservation.getReservationCreationTime())).intendedUsageDateTime(LocalDateTime.of(studentReservation.getDateReservationWasMadeFor(), studentReservation.getTimeReservationWasMadeFor())).intendedStay(studentReservation.getIntendedStay()).checkOutDateAndTime(studentReservation.getCheckOutDateAndTime()).reservationStatus(studentReservation.getReservationStatus()).matricNumber(matricNumber).stayExtended(studentReservation.isStayExtended()).totalExtensionDuration(studentReservation.getTotalExtensionDuration()).build()).toList();
+        return reservationList.stream().map(StudentReservationDto::new).toList();
     }
 
     public boolean cancelAllReservations(String matricNumber) {

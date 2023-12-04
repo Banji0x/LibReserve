@@ -6,7 +6,7 @@ import dev.banji.LibReserve.model.LibraryOccupancyQueue;
 import dev.banji.LibReserve.model.Student;
 import dev.banji.LibReserve.model.StudentReservation;
 import dev.banji.LibReserve.model.dtos.CurrentStudentDetailDto;
-import dev.banji.LibReserve.model.dtos.SimpleStudentReservationDto;
+import dev.banji.LibReserve.model.dtos.StudentReservationDto;
 import dev.banji.LibReserve.model.enums.ReservationStatus;
 import dev.banji.LibReserve.repository.StudentRepository;
 import dev.banji.LibReserve.repository.StudentReservationRepository;
@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
@@ -215,26 +216,29 @@ public class LibrarianService {
     /**
      * This method simply verifies if a reservation code
      *
-     * @return a dto of type "SimpleStudentReservationDto"
+     * @return a dto of type "StudentReservationDto"
      */
-    public SimpleStudentReservationDto verifyStudentReservationCode(String reservationCode) {
+    public StudentReservationDto verifyStudentReservationCode(String reservationCode) {
         StudentReservation studentReservation = studentReservationRepository.findByReservationCode(reservationCode).orElseThrow(() -> {
             throw new ReservationDoesNotExistException();
         });
-        return SimpleStudentReservationDto.builder().matricNumber(studentReservation.getStudent().getMatricNumber()).reservationCode(reservationCode).reservationStatus(studentReservation.getReservationStatus()).duration(studentReservation.getIntendedStay()).seatNumber(studentReservation.getSeatNumber()).reservationDateAndTime(LocalDateTime.of(studentReservation.getDateReservationWasMadeFor(), studentReservation.getTimeReservationWasMadeFor())).build();
+        return new StudentReservationDto(studentReservation);
     }
 
     /**
      * This method will fetch the student reservations for today
      */
-    public List<SimpleStudentReservationDto> fetchStudentReservationForToday(String matricNumber) {
+    public List<StudentReservationDto> fetchStudentReservationForToday(String matricNumber) {
         List<StudentReservation> studentReservationList = studentReservationRepository.findByStudentMatricNumberAndDateReservationWasMadeFor(matricNumber, now());
         return mapToSimpleStudentReservationDtos(studentReservationList);
     }
 
-    private List<SimpleStudentReservationDto> mapToSimpleStudentReservationDtos(List<StudentReservation> studentReservationList) {
+    private List<StudentReservationDto> mapToSimpleStudentReservationDtos(List<StudentReservation> studentReservationList) {
         if (studentReservationList.isEmpty()) throw new ReservationDoesNotExistException();
-        return studentReservationList.stream().map(studentReservation -> SimpleStudentReservationDto.builder().matricNumber(studentReservation.getStudent().getMatricNumber()).reservationCode(studentReservation.getReservationCode()).reservationStatus(studentReservation.getReservationStatus()).duration(studentReservation.getIntendedStay()).seatNumber(studentReservation.getSeatNumber()).reservationDateAndTime(LocalDateTime.of(studentReservation.getDateReservationWasMadeFor(), studentReservation.getTimeReservationWasMadeFor())).build()).toList();
+        return studentReservationList
+                .stream()
+                .map(StudentReservationDto::new)
+                .toList();
     }
 
 //    public Boolean verifyReservationCodeAndSignInStudent(String reservationCode) {
@@ -316,7 +320,7 @@ public class LibrarianService {
     /**
      * This method will fetch all the student reservations
      */
-    public List<SimpleStudentReservationDto> fetchAllStudentReservations(String matricNumber) {
+    public List<StudentReservationDto> fetchAllStudentReservations(String matricNumber) {
         List<StudentReservation> studentReservationList = studentReservationRepository.findByStudentMatricNumber(matricNumber);
         return mapToSimpleStudentReservationDtos(studentReservationList);
     }

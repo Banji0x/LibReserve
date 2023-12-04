@@ -1,18 +1,15 @@
 package dev.banji.LibReserve.controller;
 
-import dev.banji.LibReserve.model.dtos.SimpleStudentReservationDto;
+import dev.banji.LibReserve.model.dtos.StudentReservationDto;
 import dev.banji.LibReserve.service.LibrarianService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 import static org.springframework.http.HttpStatus.ACCEPTED;
+import static org.springframework.http.HttpStatus.OK;
 
 @RestController
 @RequestMapping("api/lib-reserve/librarian")
@@ -78,21 +75,21 @@ public class LibrarianController {
     @GetMapping("/verify/reservationCode")
     @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')") //secured with oauth2
     @ResponseStatus(ACCEPTED)
-    public SimpleStudentReservationDto verifyStudentReservationCode(String reservationCode) {
+    public StudentReservationDto verifyStudentReservationCode(String reservationCode) {
         return librarianService.verifyStudentReservationCode(reservationCode);
     }
 
     @GetMapping("/reservations/today")
     @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')") //secured with oauth2
     @ResponseStatus(ACCEPTED)
-    public List<SimpleStudentReservationDto> fetchStudentReservationForToday(String matricNumber) {
+    public List<StudentReservationDto> fetchStudentReservationForToday(@PathVariable String matricNumber) {
         return librarianService.fetchStudentReservationForToday(matricNumber);
     }
 
     @GetMapping("/reservations/all")
     @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')") //secured with oauth2
     @ResponseStatus(ACCEPTED)
-    public List<SimpleStudentReservationDto> fetchAllStudentReservations(String matricNumber) {
+    public List<StudentReservationDto> fetchAllStudentReservations(@PathVariable String matricNumber) {
         return librarianService.fetchAllStudentReservations(matricNumber);
     }
 }

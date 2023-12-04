@@ -1,31 +1,66 @@
 package dev.banji.LibReserve.model.dtos;
 
-import dev.banji.LibReserve.exceptions.LibraryRuntimeException;
+import dev.banji.LibReserve.model.StudentReservation;
 import dev.banji.LibReserve.model.enums.ReservationStatus;
-import lombok.Builder;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-public class StudentReservationDto extends AbstractReservationDto {
-    private final String matricNumber;
-    private final Boolean stayExtended;
-    private final Duration totalExtensionDuration;
+public final class StudentReservationDto implements AbstractReservationDto {
+    private final StudentReservation studentReservation;
 
-    @Builder
-    public StudentReservationDto(Long seatNumber,
-                                 LocalDateTime reservationCreationDateTime,
-                                 LocalDateTime intendedUsageDateTime,
-                                 LocalDateTime checkOutDateAndTime,
-                                 ReservationStatus reservationStatus,
-                                 String matricNumber,
-                                 LocalDateTime checkInDateAndTime,
-                                 Boolean stayExtended, Duration intendedStay, Duration totalExtensionDuration) {
-        super(seatNumber, reservationCreationDateTime, intendedUsageDateTime, checkOutDateAndTime, reservationStatus, checkInDateAndTime, intendedStay);
-        if (stayExtended.equals(false) && totalExtensionDuration != null)
-            throw new LibraryRuntimeException(); //TODO write a more descriptive message..
-        this.matricNumber = matricNumber;
-        this.stayExtended = stayExtended;
-        this.totalExtensionDuration = totalExtensionDuration;
+    public StudentReservationDto(StudentReservation studentReservation) {
+        this.studentReservation = studentReservation;
     }
+
+    String matricNumber() {
+        return studentReservation.getStudent().getMatricNumber();
+    }
+
+    @Override
+    public LocalDateTime checkOutDateTime() {
+        return studentReservation.getCheckOutDateAndTime();
+    }
+
+    public Duration totalDuration() {
+        return studentReservation.getTotalExtensionDuration();
+    }
+
+    public String reservationCode() {
+        return studentReservation.getReservationCode();
+    }
+
+    @Override
+    public ReservationStatus reservationStatus() {
+        return studentReservation.getReservationStatus();
+    }
+
+    public LocalDateTime reservationMadeOn() {
+        return LocalDateTime.of(studentReservation.getReservationCreationDate(), studentReservation.getReservationCreationTime());
+    }
+
+    @Override
+    public LocalDateTime reservedDateAndTime() {
+        return LocalDateTime.of(studentReservation.getDateReservationWasMadeFor(), studentReservation.getTimeReservationWasMadeFor());
+    }
+
+    @Override
+    public Duration initialDuration() {
+        return studentReservation.getIntendedStay();
+
+    }
+
+    public Boolean stayExtended() {
+        return studentReservation.isStayExtended();
+    }
+
+    public Duration extensionAdded() {
+        return studentReservation.getTotalExtensionDuration();
+    }
+
+    @Override
+    public Long seatNumber() {
+        return studentReservation.getSeatNumber();
+    }
+
 }
