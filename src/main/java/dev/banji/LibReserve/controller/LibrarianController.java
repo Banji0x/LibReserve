@@ -17,11 +17,6 @@ import static org.springframework.http.HttpStatus.OK;
 public class LibrarianController {
     private final LibrarianService librarianService;
 
-    @GetMapping("/")
-    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')") //secured with oauth2
-    public String homePage(JwtAuthenticationToken authentication) {
-        return "homePage " + authentication.getName();
-    }
 //    @PostMapping("/json/addNewFaculty")
 //    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')") //secured with oauth2
 //    public Boolean addNewFaculties(@RequestBody String jsonData) throws JsonProcessingException {
