@@ -2,6 +2,7 @@ package dev.banji.LibReserve.config.properties;
 
 import dev.banji.LibReserve.exceptions.LibraryRuntimeException;
 import dev.banji.LibReserve.model.AllowedFaculties;
+import dev.banji.LibReserve.model.dtos.LibrarianSeatDto;
 import dev.banji.LibReserve.model.dtos.NotificationTimeDto;
 import dev.banji.LibReserve.model.dtos.NotificationsConfig;
 import lombok.Getter;
@@ -39,12 +40,11 @@ public final class LibraryConfigurationProperties {
     private Boolean allowAdvancedBookings;
     private Integer maximumLimitPerDay;
     private Boolean enableLimitPerDay;
-    private Boolean reserveLibrarianSeat;
-    private Long numberOfLibrarians;
+    private LibrarianSeatDto librarianSeatDto;
     private Boolean allowMultipleTimeExtension;
 
     @ConstructorBinding
-    public LibraryConfigurationProperties(String universityUrl, Boolean acceptingBookings, Long bookingTimeAllowedInMinutes, Long recommendedCheckInTime, Long numberOfSeats, Boolean allowTimeExtension, Long maximumTimeExtensionAllowedInMinutes, Boolean allowLateCheckIn, Long allowedLateCheckInTimeInMinutes, Boolean allowEarlyCheckIn, Long allowedEarlyCheckInMinutes, NotificationsConfig sendNotifications, List<NotificationTimeDto> notificationList, Long readTimeoutInSeconds, Long connectTimeoutInSeconds, Set<AllowedFaculties> setOfAllowedFaculties, Boolean enableSeatRandomization, Boolean allowMultipleReservations, Boolean allowAdvancedBookings, Integer maximumLimitPerDay, Boolean enableLimitPerDay, Boolean reserveLibrarianSeat, Long numberOfLibrarians, Boolean allowMultipleTimeExtension, Boolean sendMessagesViaEmail) {
+    public LibraryConfigurationProperties(String universityUrl, Boolean acceptingBookings, Long bookingTimeAllowedInMinutes, Long recommendedCheckInTime, Long numberOfSeats, Boolean allowTimeExtension, Long maximumTimeExtensionAllowedInMinutes, Boolean allowLateCheckIn, Long allowedLateCheckInTimeInMinutes, Boolean allowEarlyCheckIn, Long allowedEarlyCheckInMinutes, NotificationsConfig sendNotifications, List<NotificationTimeDto> notificationList, Long readTimeoutInSeconds, Long connectTimeoutInSeconds, Set<AllowedFaculties> setOfAllowedFaculties, Boolean enableSeatRandomization, Boolean allowMultipleReservations, Boolean allowAdvancedBookings, Integer maximumLimitPerDay, Boolean enableLimitPerDay, Boolean reserveLibrarianSeat, Long numberOfLibrarians, Boolean allowMultipleTimeExtension, Boolean sendMessagesViaEmail, LibrarianSeatDto librarianSeatDto) {
         this.universityUrl = universityUrl;
         this.acceptingBookings = acceptingBookings;
         this.bookingTimeAllowedInMinutes = bookingTimeAllowedInMinutes;
@@ -59,6 +59,7 @@ public final class LibraryConfigurationProperties {
         this.sendNotifications = sendNotifications;
         this.sendMessagesViaEmail = sendMessagesViaEmail;
         this.notificationList = notificationList;
+        this.librarianSeatDto = librarianSeatDto;
         this.notificationList.sort(Comparator.comparing(NotificationTimeDto::timeLeft));
         this.readTimeoutInSeconds = readTimeoutInSeconds;
         this.connectTimeoutInSeconds = connectTimeoutInSeconds;
@@ -68,8 +69,6 @@ public final class LibraryConfigurationProperties {
         this.allowAdvancedBookings = allowAdvancedBookings;
         this.maximumLimitPerDay = maximumLimitPerDay;
         this.enableLimitPerDay = enableLimitPerDay;
-        this.reserveLibrarianSeat = reserveLibrarianSeat;
-        this.numberOfLibrarians = numberOfLibrarians;
         this.allowMultipleTimeExtension = allowMultipleTimeExtension;
     }
 
