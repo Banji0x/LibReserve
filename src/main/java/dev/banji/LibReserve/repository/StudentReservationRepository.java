@@ -33,4 +33,7 @@ public interface StudentReservationRepository extends JpaRepository<StudentReser
 
     Optional<StudentReservation> findByReservationCodeAndDateReservationWasMadeFor(String reservationCode, LocalDate now);
 
+    List<StudentReservation> findByReservationCreationDate(LocalDate localDate);
+
+    List<StudentReservation> findByDateReservationWasMadeFor(LocalDate localDate);
 }
