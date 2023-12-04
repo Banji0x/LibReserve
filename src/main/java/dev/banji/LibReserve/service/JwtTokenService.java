@@ -30,7 +30,7 @@ public class JwtTokenService {
 
     private String generateAccessToken(Authentication authenticatedToken, @NonNull Long expirationTime) {
         var scope = authenticatedToken.getAuthorities().stream().map(GrantedAuthority::getAuthority).toString();
-        var userIdentifier = authenticatedToken.getPrincipal() instanceof LibrarianSecurityDetails ? ((LibrarianSecurityDetails) authenticatedToken.getPrincipal()).getUsername() : ((StudentSecurityDetails) authenticatedToken.getPrincipal()).getMatricNumber();
+        var userIdentifier = authenticatedToken.getPrincipal() instanceof LibrarianSecurityDetails ? ((LibrarianSecurityDetails) authenticatedToken.getPrincipal()).getStaffNumber() : ((StudentSecurityDetails) authenticatedToken.getPrincipal()).getMatricNumber();
         assert userIdentifier != null;
         JwtClaimsSet claims = JwtClaimsSet.builder().issuedAt(Instant.now()).issuer("LibReserve").expiresAt(Instant.now().plus(expirationTime, MINUTES)).subject(userIdentifier).claim("scope", scope.trim()).build();
         JwtEncoderParameters encoderParameters = JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS512).build(), claims);
