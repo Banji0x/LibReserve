@@ -21,12 +21,14 @@ public class NotificationService { //TODO validation also has to be done to ensu
     private final SimpMessagingTemplate messagingTemplate;
     private final EmailService emailService;
     //TODO this should be injected from a file...
-    private final String notificationSubject;
+    @Value("${library.properties.sendNotifications.notificationSubject}")
+    private String notificationSubject;
     //TODO this should be injected from a file...
-    private final String notificationBody;
-    @Value("library.properties.sendNotifications.viaWeb")
+    @Value("${library.properties.sendNotifications.notificationBody}")
+    private String notificationBody;
+    @Value("${library.properties.sendNotifications.viaWeb}")
     private Boolean notifyViaWeb;
-    @Value("library.properties.sendNotifications.viaMail")
+    @Value("${library.properties.sendNotifications.viaMail}")
     private Boolean notifyViaMail;
 
     @PreAuthorize("hasAnyAuthority('SCOPE_LIBRARIAN')")

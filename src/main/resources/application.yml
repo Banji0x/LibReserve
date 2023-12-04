@@ -60,6 +60,8 @@ library:
       enabled: true
       viaWeb: true
       viaMail: true
+      notificationSubject: ""
+      notificationBody: ""
     sendMessagesViaEmail: true
     readTimeoutInSeconds: 10
     connectTimeoutInSeconds: 10
