@@ -79,17 +79,31 @@ public class LibrarianController {
         return librarianService.verifyStudentReservationCode(reservationCode);
     }
 
-    @GetMapping("/reservations/today")
+    @GetMapping("/reservations/today/{matricNumber}")
     @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')") //secured with oauth2
     @ResponseStatus(ACCEPTED)
     public List<StudentReservationDto> fetchStudentReservationForToday(@PathVariable String matricNumber) {
         return librarianService.fetchStudentReservationForToday(matricNumber);
     }
 
-    @GetMapping("/reservations/all")
+    @GetMapping("/reservations/all/{matricNumber}")
     @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')") //secured with oauth2
     @ResponseStatus(ACCEPTED)
     public List<StudentReservationDto> fetchAllStudentReservations(@PathVariable String matricNumber) {
         return librarianService.fetchAllStudentReservations(matricNumber);
+    }
+
+    @GetMapping("/reservations/now")
+    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')") //secured with oauth2
+    @ResponseStatus(OK)
+    public List<StudentReservationDto> fetchCurrentStudentsInLibrary() {
+        return librarianService.fetchCurrentStudentsInLibrary();
+    }
+
+    @GetMapping("/reservations/today")
+    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')") //secured with oauth2
+    @ResponseStatus(OK)
+    public List<StudentReservationDto> fetchStudentListForToday() {
+        return librarianService.fetchStudentListForToday();
     }
 }

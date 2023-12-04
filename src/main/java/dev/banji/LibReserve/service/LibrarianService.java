@@ -324,4 +324,20 @@ public class LibrarianService {
         List<StudentReservation> studentReservationList = studentReservationRepository.findByStudentMatricNumber(matricNumber);
         return mapToSimpleStudentReservationDtos(studentReservationList);
     }
+
+    public List<StudentReservationDto> fetchCurrentStudentsInLibrary() {
+        return occupancyQueue.fetchOccupancyQueueAsList().stream()
+                .filter(inmemoryUserDetailDto -> inmemoryUserDetailDto instanceof CurrentStudentDetailDto)
+                .map(inmemoryUserDetailDto -> (CurrentStudentDetailDto) inmemoryUserDetailDto)
+                .map(currentStudentDetailDto -> new StudentReservationDto(currentStudentDetailDto.studentReservation()))
+                .toList();
+    }
+
+    public List<StudentReservationDto> fetchStudentListForToday() {
+        return studentReservationRepository
+                .findByDateReservationWasMadeFor(LocalDate.now())
+                .stream()
+                .map(StudentReservationDto::new)
+                .toList();
+    }
 }
