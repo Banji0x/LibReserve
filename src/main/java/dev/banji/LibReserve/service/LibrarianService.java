@@ -2,15 +2,19 @@ package dev.banji.LibReserve.service;
 
 import dev.banji.LibReserve.config.properties.LibraryConfigurationProperties;
 import dev.banji.LibReserve.exceptions.*;
+import dev.banji.LibReserve.model.CurrentLibrarianDetailDto;
 import dev.banji.LibReserve.model.LibraryOccupancyQueue;
 import dev.banji.LibReserve.model.Student;
 import dev.banji.LibReserve.model.StudentReservation;
 import dev.banji.LibReserve.model.dtos.CurrentStudentDetailDto;
 import dev.banji.LibReserve.model.dtos.StudentReservationDto;
 import dev.banji.LibReserve.model.enums.ReservationStatus;
+import dev.banji.LibReserve.repository.LibrarianReservationRepository;
 import dev.banji.LibReserve.repository.StudentRepository;
 import dev.banji.LibReserve.repository.StudentReservationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -30,6 +34,10 @@ public class LibrarianService {
     private final LibraryOccupancyQueue occupancyQueue;
     private final StudentReservationRepository studentReservationRepository;
     private final StudentRepository studentRepository;
+    private final LibrarianReservationRepository librarianReservationRepository;
+    private final JwtTokenService jwtTokenService;
+    private final LibraryOccupancyQueue libraryOccupancyQueue;
+
 
 //    public Long retrieveNumberOfStudentsCurrentlyInTheLibrary() {
 //        return null;
@@ -73,19 +81,23 @@ public class LibrarianService {
 //        return true;
 //    }
 
-    //    public boolean signOutLibrarian(Jwt jwt, String staffNumber) {
-//        LibrarianReservation librarianReservation = librarianReservationRepository.findByStaffNumber(staffNumber).get();
-//        librarianReservation.setCheckOutDateAndTime(LocalDateTime.now()); //check out user...
-//        librarianReservation.setReservationStatus(CHECKED_OUT);//change librarianReservation status
-//        librarianReservationRepository.save(librarianReservation);//update in repository
-//
-//        //TODO free up space ?
-//        //maybe add seat to list...
-//        boolean signedOut = libraryOccupancyQueue.signOutUser(new CurrentLibrarianDetailDto(librarianReservation.getSeatNumber(), staffNumber, librarianReservation, jwt));
-//
-//        //add JWT to blacklist
-//        return jwtTokenService.blacklistJwt(String.valueOf(jwt)) && signedOut;
-//    }
+    public void signOutLibrarian(JwtAuthenticationToken authentication) {
+        var staffNumber = authentication.getName();
+        Jwt jwt = authentication.getToken();
+        var librarianReservation = librarianReservationRepository.findByLibrarianStaffNumber(staffNumber).orElseThrow(() -> {
+            throw UserNotFoundException.LibrarianNotFoundException();
+        });
+        boolean signedOut = libraryOccupancyQueue.signOutLibrarian(new CurrentLibrarianDetailDto(staffNumber, librarianReservation, jwt));
+
+        librarianReservation.setCheckOutDateAndTime(LocalDateTime.now()); //check out user...
+        librarianReservation.setReservationStatus(LIBRARIAN_CHECKED_OUT);//change librarianReservation status
+        librarianReservationRepository.save(librarianReservation);//update in repository
+
+        //add JWT to blacklist
+        boolean blackListed = jwtTokenService.blacklistAccessToken(jwt);
+        if (!blackListed && !signedOut) throw new LibraryRuntimeException();
+    }
+
     private Optional<StudentReservation> allowEntry(StudentReservation studentReservation) {
         if (!studentReservation.getReservationStatus().equals(BOOKED))
             throw new InvalidReservationException("Expired Reservation");
@@ -235,10 +247,7 @@ public class LibrarianService {
 
     private List<StudentReservationDto> mapToSimpleStudentReservationDtos(List<StudentReservation> studentReservationList) {
         if (studentReservationList.isEmpty()) throw new ReservationDoesNotExistException();
-        return studentReservationList
-                .stream()
-                .map(StudentReservationDto::new)
-                .toList();
+        return studentReservationList.stream().map(StudentReservationDto::new).toList();
     }
 
 //    public Boolean verifyReservationCodeAndSignInStudent(String reservationCode) {
@@ -326,18 +335,10 @@ public class LibrarianService {
     }
 
     public List<StudentReservationDto> fetchCurrentStudentsInLibrary() {
-        return occupancyQueue.fetchOccupancyQueueAsList().stream()
-                .filter(inmemoryUserDetailDto -> inmemoryUserDetailDto instanceof CurrentStudentDetailDto)
-                .map(inmemoryUserDetailDto -> (CurrentStudentDetailDto) inmemoryUserDetailDto)
-                .map(currentStudentDetailDto -> new StudentReservationDto(currentStudentDetailDto.studentReservation()))
-                .toList();
+        return occupancyQueue.fetchOccupancyQueueAsList().stream().filter(inmemoryUserDetailDto -> inmemoryUserDetailDto instanceof CurrentStudentDetailDto).map(inmemoryUserDetailDto -> (CurrentStudentDetailDto) inmemoryUserDetailDto).map(currentStudentDetailDto -> new StudentReservationDto(currentStudentDetailDto.studentReservation())).toList();
     }
 
     public List<StudentReservationDto> fetchStudentListForToday() {
-        return studentReservationRepository
-                .findByDateReservationWasMadeFor(LocalDate.now())
-                .stream()
-                .map(StudentReservationDto::new)
-                .toList();
+        return studentReservationRepository.findByDateReservationWasMadeFor(LocalDate.now()).stream().map(StudentReservationDto::new).toList();
     }
 }

@@ -4,6 +4,7 @@ import dev.banji.LibReserve.model.dtos.StudentReservationDto;
 import dev.banji.LibReserve.service.LibrarianService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -100,5 +101,12 @@ public class LibrarianController {
     @ResponseStatus(OK)
     public List<StudentReservationDto> fetchStudentListForToday() {
         return librarianService.fetchStudentListForToday();
+    }
+
+    @GetMapping("/logout")
+    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')") //secured with oauth2
+    @ResponseStatus(OK)
+    public void logout(JwtAuthenticationToken authentication) {
+        librarianService.signOutLibrarian(authentication);
     }
 }
