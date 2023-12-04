@@ -13,14 +13,12 @@ import java.util.concurrent.ArrayBlockingQueue;
 @Component
 //@PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
 public class LibraryOccupancyQueue extends ArrayBlockingQueue<InmemoryUserDetailDto> {
-    private final LibraryConfigurationProperties libraryConfigurationProperties;
     @Getter
     private final ArrayList<Long> availableSeatNumberList;
 
 
     public LibraryOccupancyQueue(LibraryConfigurationProperties libraryConfigurationProperties) {
         super(libraryConfigurationProperties.getNumberOfSeats().intValue());
-        this.libraryConfigurationProperties = libraryConfigurationProperties;
         availableSeatNumberList = new ArrayList<>();
         for (int i = 1; i < libraryConfigurationProperties.getNumberOfSeats().intValue(); i++) { //this is to simply store the available seats...
             availableSeatNumberList.add((long) i);
