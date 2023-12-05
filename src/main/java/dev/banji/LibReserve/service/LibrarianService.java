@@ -87,7 +87,7 @@ public class LibrarianService {
         var librarianReservation = librarianReservationRepository.findByLibrarianStaffNumber(staffNumber).orElseThrow(() -> {
             throw UserNotFoundException.LibrarianNotFoundException();
         });
-        boolean signedOut = libraryOccupancyQueue.signOutLibrarian(new CurrentLibrarianDetailDto(staffNumber, librarianReservation, jwt));
+        boolean signedOut = libraryOccupancyQueue.signOutLibrarian(new CurrentLibrarianDetailDto(staffNumber, librarianReservation));
 
         librarianReservation.setCheckOutDateAndTime(LocalDateTime.now()); //check out user...
         librarianReservation.setReservationStatus(LIBRARIAN_CHECKED_OUT);//change librarianReservation status

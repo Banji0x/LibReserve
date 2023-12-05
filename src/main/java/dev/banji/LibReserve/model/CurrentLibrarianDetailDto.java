@@ -1,9 +1,7 @@
 package dev.banji.LibReserve.model;
 
-import org.springframework.security.oauth2.jwt.Jwt;
-
-public record CurrentLibrarianDetailDto(String staffNumber, LibrarianReservation librarianReservation,
-                                        Jwt jwt) implements InmemoryUserDetailDto {
+public record CurrentLibrarianDetailDto(String staffNumber,
+                                        LibrarianReservation librarianReservation) implements InmemoryUserDetailDto {
     @Override
     public Long getSeatNumber() {
         return librarianReservation.seatNumber;
