@@ -24,4 +24,22 @@ public record CurrentStudentDetailDto(String matricNumber,
     public StudentReservation getReservation() {
         return studentReservation;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CurrentStudentDetailDto that = (CurrentStudentDetailDto) o;
+
+        if (!matricNumber.equals(that.matricNumber)) return false;
+        return studentReservation.equals(that.studentReservation);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = matricNumber.hashCode();
+        result = 31 * result + studentReservation.hashCode();
+        return result;
+    }
 }
