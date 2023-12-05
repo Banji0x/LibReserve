@@ -24,8 +24,8 @@ public class LibrarianAuthenticationToken extends AbstractAuthenticationToken {
         this.credentials = credentials;
     }
 
-    public static LibrarianAuthenticationToken authenticated(Object principal, Collection<? extends GrantedAuthority> authorities) {
-        ((LibrarianSecurityDetails) principal).eraseCredentials();
+    public static LibrarianAuthenticationToken authenticated(LibrarianSecurityDetails principal, Collection<? extends GrantedAuthority> authorities) {
+        principal.eraseCredentials();
         return new LibrarianAuthenticationToken(principal, authorities);
     }
 
@@ -41,10 +41,6 @@ public class LibrarianAuthenticationToken extends AbstractAuthenticationToken {
     @Override
     public Object getPrincipal() {
         return this.principal;
-    }
-
-    public String getStaffNumber() {
-        return ((LibrarianSecurityDetails) principal).getStaffNumber();
     }
 
     @Override

@@ -2,10 +2,7 @@ package dev.banji.LibReserve.service;
 
 import dev.banji.LibReserve.config.properties.LibraryConfigurationProperties;
 import dev.banji.LibReserve.exceptions.*;
-import dev.banji.LibReserve.model.CurrentLibrarianDetailDto;
-import dev.banji.LibReserve.model.LibraryOccupancyQueue;
-import dev.banji.LibReserve.model.Student;
-import dev.banji.LibReserve.model.StudentReservation;
+import dev.banji.LibReserve.model.*;
 import dev.banji.LibReserve.model.dtos.CurrentStudentDetailDto;
 import dev.banji.LibReserve.model.dtos.StudentReservationDto;
 import dev.banji.LibReserve.model.enums.ReservationStatus;
@@ -44,13 +41,13 @@ public class LibrarianService {
         Jwt jwt = authentication.getToken();
         boolean sessionSignedOut = false;
         boolean wasInSession = false;
-        var librarianReservationOptional = librarianReservationRepository.findByLibrarianStaffNumber(staffNumber);
+        var librarianReservationOptional = libraryOccupancyQueue.isUserPresentInLibrary(staffNumber);
         if (librarianReservationOptional.isPresent()) {
             wasInSession = true;
-            sessionSignedOut = libraryOccupancyQueue.signOutLibrarian(new CurrentLibrarianDetailDto(staffNumber, librarianReservationOptional.get()));
+            sessionSignedOut = libraryOccupancyQueue.signOutLibrarian(new CurrentLibrarianDetailDto(staffNumber, (LibrarianReservation) librarianReservationOptional.get()));
             librarianReservationOptional.get().setCheckOutDateAndTime(LocalDateTime.now()); //check out user...
             librarianReservationOptional.get().setReservationStatus(LIBRARIAN_CHECKED_OUT);//change librarianReservation status
-            librarianReservationRepository.save(librarianReservationOptional.get());//update in repository
+            librarianReservationRepository.save((LibrarianReservation) librarianReservationOptional.get());//update in repository
         }
         //add JWT to blacklist
         boolean blackListed = jwtTokenService.blacklistAccessToken(jwt);
@@ -109,7 +106,6 @@ public class LibrarianService {
         });
         kickStudentOut(studentReservation);
     }
-
 
     public void blacklistStudent(String matricNumber) {
         Student student = studentRepository.findByMatricNumber(matricNumber).orElseThrow(() -> {

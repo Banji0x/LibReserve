@@ -1,13 +1,13 @@
 package dev.banji.LibReserve.config.authenticationproviders;
 
 import dev.banji.LibReserve.config.tokens.LibrarianAuthenticationToken;
+import dev.banji.LibReserve.config.userDetails.LibrarianSecurityDetails;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -30,7 +30,7 @@ public class LibrarianAuthenticationProvider implements AuthenticationProvider {
             throw new BadCredentialsException("Bad Credentials");
         String staffNumber = (String) librarianAuthenticationToken.getPrincipal();
         String rawCredentials = (String) librarianAuthenticationToken.getCredentials();
-        UserDetails librarianUserDetails = librarianUserDetailsService.loadUserByUsername(staffNumber);
+        var librarianUserDetails = (LibrarianSecurityDetails) librarianUserDetailsService.loadUserByUsername(staffNumber);
         if (!passwordEncoder.matches(rawCredentials, librarianUserDetails.getPassword()))
             throw new BadCredentialsException("Bad Credentials.");
         if (!librarianUserDetails.isEnabled())

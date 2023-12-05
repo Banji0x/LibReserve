@@ -1,5 +1,6 @@
 package dev.banji.LibReserve.controller.authentication;
 
+import dev.banji.LibReserve.config.tokens.LibrarianAuthenticationToken;
 import dev.banji.LibReserve.service.JwtTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,7 +17,7 @@ public class JWTGeneratorController {
 
     @PostMapping("/librarian")
     @PreAuthorize("hasRole('LIBRARIAN')")
-    public String librarianToken(Authentication authentication) {
+    public String librarianToken(LibrarianAuthenticationToken authentication) {
         return tokenService.generateAccessToken(authentication);
     }
 
