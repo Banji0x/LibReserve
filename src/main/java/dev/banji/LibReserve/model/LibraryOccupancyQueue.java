@@ -16,16 +16,16 @@ import java.util.concurrent.ArrayBlockingQueue;
 //@PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
 public class LibraryOccupancyQueue extends ArrayBlockingQueue<InmemoryUserDetailDto> {
     @Getter
-    private final ArrayList<Long> availableSeatNumberList;
+    private final ArrayList<Long> internalAvailableSeatNumberList;
     private final LibraryConfigurationProperties libraryConfigurationProperties;
 
 
     public LibraryOccupancyQueue(LibraryConfigurationProperties libraryConfigurationProperties) {
         super(libraryConfigurationProperties.getNumberOfSeats().intValue());
         this.libraryConfigurationProperties = libraryConfigurationProperties;
-        availableSeatNumberList = new ArrayList<>();
+        internalAvailableSeatNumberList = new ArrayList<>();
         for (int i = 1; i < libraryConfigurationProperties.getNumberOfSeats().intValue(); i++) { //this is to simply store the available seats...
-            availableSeatNumberList.add((long) i);
+            internalAvailableSeatNumberList.add((long) i);
         }
     }
 
@@ -95,8 +95,8 @@ public class LibraryOccupancyQueue extends ArrayBlockingQueue<InmemoryUserDetail
     }
 
     private boolean freeUpSeat(Long seatNumber) { //add seat back to list...
-        if (!availableSeatNumberList.contains(seatNumber))
-            return availableSeatNumberList.add(seatNumber);
+        if (!internalAvailableSeatNumberList.contains(seatNumber))
+            return internalAvailableSeatNumberList.add(seatNumber);
         return false;
     }
 
