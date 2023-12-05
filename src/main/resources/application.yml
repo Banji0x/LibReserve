@@ -60,8 +60,14 @@ library:
       enabled: true
       viaWeb: true
       viaMail: true
-      notificationSubject: ""
-      notificationBody: ""
+      timeUpNotificationSubject: ""
+      timeUpNotificationBody: ""
+      blackListNotificationSubject: ""
+      blackListNotificationBody: ""
+      timeAlmostUpNotificationSubject: ""
+      timeAlmostUpNotificationBody: ""
+      studentKickedOutNotificationSubject: " "
+      studentKickedOutNotificationBody: ""
     sendMessagesViaEmail: true
     readTimeoutInSeconds: 10
     connectTimeoutInSeconds: 10
