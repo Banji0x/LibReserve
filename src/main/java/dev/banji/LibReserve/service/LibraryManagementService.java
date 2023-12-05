@@ -51,7 +51,7 @@ public class LibraryManagementService {
 
                         notificationList.forEach(notification -> {
                             if (notification.timeLeft().equals(remainingTimeInMinutes))
-                                notificationService.notifyStudent(studentReservation.getStudent().getMatricNumber(), new SingleWebNotificationDto(studentReservation.getStudent().getMatricNumber(), notification.message(), notification.timeLeft()));
+                                notificationService.timeAlmostNotification(studentReservation.getStudent().getMatricNumber(), remainingTimeInMinutes);
                         });
                         return;
                     }

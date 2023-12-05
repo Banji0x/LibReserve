@@ -37,6 +37,7 @@ public class LibrarianService {
     private final LibrarianReservationRepository librarianReservationRepository;
     private final JwtTokenService jwtTokenService;
     private final LibraryOccupancyQueue libraryOccupancyQueue;
+    private final NotificationService notificationService;
 
     public void signOutLibrarian(JwtAuthenticationToken authentication) {
         var staffNumber = authentication.getName();
@@ -99,32 +100,44 @@ public class LibrarianService {
         StudentReservation studentReservation = occupancyQueue.isStudentPresentInLibrary(reservationCode).orElseThrow(() -> {
             throw new StudentNotInLibraryException();
         });
-        invalidateStudentSession(studentReservation);
+        kickStudentOut(studentReservation);
     }
 
     public void invalidateStudentSessionByMatricNumber(String matricNumber) {
         StudentReservation studentReservation = (StudentReservation) occupancyQueue.isUserPresentInLibrary(matricNumber).orElseThrow(() -> {
             throw new StudentNotInLibraryException();
         });
-        invalidateStudentSession(studentReservation);
+        kickStudentOut(studentReservation);
     }
 
-    private void invalidateStudentSession(StudentReservation studentReservation) {
-        studentReservation.setReservationStatus(BLACKLISTED);
-        studentReservation.setCheckOutDateAndTime(LocalDateTime.now()); //check out user...
-        studentReservationRepository.save(studentReservation);
-        boolean reservationInvalidated = occupancyQueue.signOutStudent(new CurrentStudentDetailDto(studentReservation.getStudent().getMatricNumber(), studentReservation));
-        if (!reservationInvalidated) throw new LibraryRuntimeException();
-        //TODO notify the user via notifications that he should exit the library.
-    }
 
     public void blacklistStudent(String matricNumber) {
         Student student = studentRepository.findByMatricNumber(matricNumber).orElseThrow(() -> {
             throw UserNotFoundException.StudentNotFoundException();
         });
-        student.getAccount().setNotLocked(false);
+        student.getAccount().setNotLocked(false); //lock account
+        if (occupancyQueue.isUserPresentInLibrary(matricNumber).isPresent()) {
+            student.getStudentReservationList().add(kickStudentOut((StudentReservation) occupancyQueue.isUserPresentInLibrary(matricNumber).get()));
+        }
         studentRepository.save(student);
-        //TODO notify the user via notifications that he should exit the library. That's if he's still in the library...
+        notificationService.studentBlackListNotification(student.getEmailAddress());
+    }
+
+    private StudentReservation kickStudentOut(StudentReservation studentReservation) {
+        String matricNumber = studentReservation.getStudent().getMatricNumber();
+        boolean isPresent = occupancyQueue.isUserPresentInLibrary(studentReservation.getStudent().getMatricNumber()).isPresent();
+        if (!isPresent) {
+            throw new StudentNotInLibraryException();
+        }
+
+        studentReservation.setReservationStatus(BLACKLISTED);
+        studentReservation.setCheckOutDateAndTime(LocalDateTime.now()); //check out user...
+
+        boolean reservationInvalidated = occupancyQueue.signOutStudent(new CurrentStudentDetailDto(studentReservation.getStudent().getMatricNumber(), studentReservation));
+        if (!reservationInvalidated) throw new LibraryRuntimeException();
+
+        notificationService.studentKickedOutNotification(matricNumber);
+        return studentReservation;
     }
 
     private void validateEntryTime(StudentReservation studentReservation) {

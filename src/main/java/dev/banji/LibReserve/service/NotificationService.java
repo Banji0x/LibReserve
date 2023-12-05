@@ -63,10 +63,40 @@ public class NotificationService { //TODO validation also has to be done to ensu
 
     @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
     //TODO validate the parameters...
-    public void notifyStudent(String emailAddress, WebNotificationDto notificationTimerDto) {
-        if (notifyViaWeb) //notify via web
-            notifyStudentViaWeb(notificationTimerDto);
-        if (notifyViaMail) //notify via email
+    public void timeUpNotification(String emailAddress) {
+        sendNotification(emailAddress, notificationsConfig.timeUpNotificationSubject(), notificationsConfig.timeUpNotificationBody());
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
+    //TODO validate the parameters...
+    public void timeAlmostNotification(String emailAddress, long remainingTimeInMinutes) {
+        sendNotification(emailAddress, notificationsConfig.timeUpNotificationSubject(), remainingTimeInMinutes + " " + notificationsConfig.timeUpNotificationBody());
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
+    //TODO validate the parameters...
+    public void blackListNotification(String emailAddress) {
+        sendNotification(emailAddress, notificationsConfig.blackListNotificationSubject(), notificationsConfig.blackListNotificationBody());
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
+    //TODO validate the parameters...
+    public void studentKickedOutNotification(String emailAddress) {
+        sendNotification(emailAddress, notificationsConfig.blackListNotificationSubject(), notificationsConfig.blackListNotificationBody());
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
+    //TODO validate the parameters...
+    public void studentBlackListNotification(String emailAddress) {
+        sendNotification(emailAddress, notificationsConfig.studentBlackListNotificationSubject(), notificationsConfig.studentBlackListNotificationBody());
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')")
+    //TODO validate the parameters...
+    private void sendNotification(String emailAddress, String notificationSubject, String notificationBody) {
+        if (notificationsConfig.viaWeb()) //notify via web
+            notifyStudentViaWeb(emailAddress, notificationSubject + "\n" + notificationBody);
+        if (notificationsConfig.viaMail()) //notify via email
             this.emailService.sendEmailNotification(new SingleEmailNotificationDto(emailAddress, notificationSubject, notificationBody));
     }
 
