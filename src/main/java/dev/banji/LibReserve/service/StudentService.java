@@ -76,7 +76,7 @@ public class StudentService {
 
     public String handleWalkInRequest(String matricNumber, Duration duration) {
         StudentReservation studentReservation = reservationHandler(matricNumber, true, LocalDateTime.now(), duration, true);
-        boolean signedIn = libraryOccupancyQueue.signInStudent(new CurrentStudentDetailDto(matricNumber, studentReservation));
+        boolean signedIn = libraryOccupancyQueue.updateStudentSession(new CurrentStudentDetailDto(matricNumber, studentReservation));
         if (!signedIn) throw new LibraryRuntimeException();
         return studentReservation.getReservationCode();
     }

@@ -60,16 +60,16 @@ public class LibraryOccupancyQueue extends ArrayBlockingQueue<InmemoryUserDetail
         return signOutUser(librarianDetailDto);
     }
 
-    private synchronized boolean signInUser(InmemoryUserDetailDto userDetailDto) {
+    private synchronized boolean updateUserSession(InmemoryUserDetailDto userDetailDto) {
         return add(userDetailDto);
     }
 
-    public synchronized boolean signInStudent(InmemoryUserDetailDto userDetailDto) {
-        return signInUser(userDetailDto);
+    public synchronized boolean updateStudentSession(InmemoryUserDetailDto userDetailDto) {
+        return updateUserSession(userDetailDto);
     }
 
-    public synchronized void signInLibrarian(InmemoryUserDetailDto userDetailDto) {
-        signInUser(userDetailDto);
+    public synchronized void updateLibrarianSession(InmemoryUserDetailDto userDetailDto) {
+        updateUserSession(userDetailDto);
     }
 
     public synchronized Optional<Reservation> isUserPresentInLibrary(String placeHolder) {

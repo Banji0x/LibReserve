@@ -105,7 +105,7 @@ public class LibrarianService {
         StudentReservation updatedReservationObject = signInStudent(studentReservation); //sign-in reservation...
         occupancyQueue.isLibraryFull(); //TODO normally this shouldn't throw any exception since the student already has a reservation
         boolean isCurrentlyInLibrary = occupancyQueue.isUserPresentInLibrary(studentReservation.getStudent().getMatricNumber()).isPresent(); //if the student is already in the library...
-        boolean signedIn = occupancyQueue.signInStudent(new CurrentStudentDetailDto(studentReservation.getStudent().getMatricNumber(), updatedReservationObject));
+        boolean signedIn = occupancyQueue.updateStudentSession(new CurrentStudentDetailDto(studentReservation.getStudent().getMatricNumber(), updatedReservationObject));
         return (signedIn && !isCurrentlyInLibrary) ? Optional.of(updatedReservationObject) : Optional.empty();
     }
 
