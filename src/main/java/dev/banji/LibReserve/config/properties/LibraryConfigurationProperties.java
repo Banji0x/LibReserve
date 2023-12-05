@@ -1,12 +1,14 @@
 package dev.banji.LibReserve.config.properties;
 
 import dev.banji.LibReserve.exceptions.LibraryRuntimeException;
+import dev.banji.LibReserve.exceptions.SeatNumberNotWithinRangeException;
 import dev.banji.LibReserve.model.AllowedFaculties;
 import dev.banji.LibReserve.model.dtos.LibrarianSeatDto;
 import dev.banji.LibReserve.model.dtos.NotificationTimeDto;
 import dev.banji.LibReserve.model.dtos.NotificationsConfig;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.ConstructorBinding;
 
@@ -59,6 +61,11 @@ public final class LibraryConfigurationProperties {
         this.sendNotifications = sendNotifications;
         this.sendMessagesViaEmail = sendMessagesViaEmail;
         this.notificationList = notificationList;
+        if (seatNumbersRangeCheck()) //the seatNumbers must be within range.
+        {
+            // prevent the container from instantiating.
+            throw new BeanInitializationException("Librarian seat numbers not within range");
+        }
         this.librarianSeatDto = librarianSeatDto;
         this.notificationList.sort(Comparator.comparing(NotificationTimeDto::timeLeft));
         this.readTimeoutInSeconds = readTimeoutInSeconds;
@@ -70,6 +77,22 @@ public final class LibraryConfigurationProperties {
         this.maximumLimitPerDay = maximumLimitPerDay;
         this.enableLimitPerDay = enableLimitPerDay;
         this.allowMultipleTimeExtension = allowMultipleTimeExtension;
+    }
+
+    private boolean seatNumbersRangeCheck() {
+        return librarianSeatDto.seatNumbers().stream().anyMatch(seatNumber -> seatNumber > numberOfSeats);
+    }
+
+    private boolean seatNumbersRangeCheck(Set<Long> seatNumberSet) {
+        return seatNumberSet.stream().anyMatch(seatNumber -> seatNumber > numberOfSeats);
+    }
+
+    public void setLibrarianSeatNumber(Set<Long> seatNumbers) {
+        if (seatNumbersRangeCheck(seatNumbers)) {
+            throw new SeatNumberNotWithinRangeException();
+        }
+        this.librarianSeatDto.seatNumbers().clear();
+        this.librarianSeatDto.seatNumbers().addAll(seatNumbers);
     }
 
     public void setRecommendedCheckInTime(Long recommendedCheckInTime) {

@@ -2,6 +2,7 @@ package dev.banji.LibReserve.controller.advice;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import dev.banji.LibReserve.exceptions.LibraryRuntimeException;
+import dev.banji.LibReserve.exceptions.SeatNumberNotWithinRangeException;
 import dev.banji.LibReserve.exceptions.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -26,6 +27,11 @@ public class ApplicationControllerAdvice {
     @ExceptionHandler
     ProblemDetail userNotFoundException(UserNotFoundException userNotFoundException) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, userNotFoundException.getMessage());
+    }
+
+    @ExceptionHandler
+    ProblemDetail seatNumberNotWithinRangeException(SeatNumberNotWithinRangeException seatNumberNotWithinRangeException) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, seatNumberNotWithinRangeException.getMessage());
     }
 
     @ExceptionHandler(JsonProcessingException.class)
