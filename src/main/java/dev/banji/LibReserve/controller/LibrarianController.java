@@ -18,21 +18,6 @@ import static org.springframework.http.HttpStatus.OK;
 public class LibrarianController {
     private final LibrarianService librarianService;
 
-//    @PostMapping("/json/addNewFaculty")
-//    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')") //secured with oauth2
-//    public Boolean addNewFaculties(@RequestBody String jsonData) throws JsonProcessingException {
-//        Set<AllowedFaculties> newFaculties = objectMapper.readValue(jsonData, new TypeReference<>() {
-//        });
-//        return librarianService.addNewFaculties(newFaculties);
-//        return null;
-//    }
-//    @PostMapping("/json/removeFaculty")
-//    @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')") //secured with oauth2
-//    public Boolean removeFaculties(List<AllowedFaculties> removeFacultiesList) {
-//        return librarianService.removeFaculties(removeFacultiesList);
-//        return null;
-//    }
-
     @GetMapping("/validate/matricNumber")
     @PreAuthorize("hasAuthority('SCOPE_LIBRARIAN')") //secured with oauth2
     @ResponseStatus(ACCEPTED)

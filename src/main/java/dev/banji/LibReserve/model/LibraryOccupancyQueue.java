@@ -72,9 +72,9 @@ public class LibraryOccupancyQueue extends ArrayBlockingQueue<InmemoryUserDetail
         updateUserSession(userDetailDto);
     }
 
-    public synchronized Optional<Reservation> isUserPresentInLibrary(String placeHolder) {
+    public synchronized Optional<Reservation> isUserPresentInLibrary(String userIdentifier) {
         return stream()
-                .filter(userDetail -> userDetail.getIdentifier().equals(placeHolder))
+                .filter(userDetail -> userDetail.getIdentifier().equals(userIdentifier))
                 .map(InmemoryUserDetailDto::getReservation).findFirst();
     }
 

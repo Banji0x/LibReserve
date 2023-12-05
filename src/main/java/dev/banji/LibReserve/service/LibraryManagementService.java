@@ -5,7 +5,6 @@ import dev.banji.LibReserve.exceptions.LibraryRuntimeException;
 import dev.banji.LibReserve.model.LibraryOccupancyQueue;
 import dev.banji.LibReserve.model.StudentReservation;
 import dev.banji.LibReserve.model.dtos.CurrentStudentDetailDto;
-import dev.banji.LibReserve.model.dtos.WebNotificationDto.SingleWebNotificationDto;
 import dev.banji.LibReserve.repository.StudentReservationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
