@@ -84,18 +84,19 @@ public class LibrarianService {
     public void signOutLibrarian(JwtAuthenticationToken authentication) {
         var staffNumber = authentication.getName();
         Jwt jwt = authentication.getToken();
-        var librarianReservation = librarianReservationRepository.findByLibrarianStaffNumber(staffNumber).orElseThrow(() -> {
-            throw UserNotFoundException.LibrarianNotFoundException();
-        });
-        boolean signedOut = libraryOccupancyQueue.signOutLibrarian(new CurrentLibrarianDetailDto(staffNumber, librarianReservation));
-
-        librarianReservation.setCheckOutDateAndTime(LocalDateTime.now()); //check out user...
-        librarianReservation.setReservationStatus(LIBRARIAN_CHECKED_OUT);//change librarianReservation status
-        librarianReservationRepository.save(librarianReservation);//update in repository
-
+        boolean sessionSignedOut = false;
+        boolean wasInSession = false;
+        var librarianReservationOptional = librarianReservationRepository.findByLibrarianStaffNumber(staffNumber);
+        if (librarianReservationOptional.isPresent()) {
+            wasInSession = true;
+            sessionSignedOut = libraryOccupancyQueue.signOutLibrarian(new CurrentLibrarianDetailDto(staffNumber, librarianReservationOptional.get()));
+            librarianReservationOptional.get().setCheckOutDateAndTime(LocalDateTime.now()); //check out user...
+            librarianReservationOptional.get().setReservationStatus(LIBRARIAN_CHECKED_OUT);//change librarianReservation status
+            librarianReservationRepository.save(librarianReservationOptional.get());//update in repository
+        }
         //add JWT to blacklist
         boolean blackListed = jwtTokenService.blacklistAccessToken(jwt);
-        if (!blackListed && !signedOut) throw new LibraryRuntimeException();
+        if ((wasInSession && !sessionSignedOut) || !blackListed) throw new LibraryRuntimeException();
     }
 
     private Optional<StudentReservation> allowEntry(StudentReservation studentReservation) {
