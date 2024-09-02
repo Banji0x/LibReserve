@@ -4,6 +4,7 @@ import dev.banji.LibReserve.exceptions.LibraryRuntimeException;
 import dev.banji.LibReserve.exceptions.SeatNumberNotWithinRangeException;
 import dev.banji.LibReserve.model.AllowedFaculties;
 import dev.banji.LibReserve.model.dtos.LibrarianSeatDto;
+import dev.banji.LibReserve.model.dtos.ManagementService;
 import dev.banji.LibReserve.model.dtos.NotificationTimeDto;
 import dev.banji.LibReserve.model.dtos.NotificationsConfig;
 import lombok.Getter;
@@ -31,9 +32,11 @@ public final class LibraryConfigurationProperties {
     private Long allowedLateCheckInTimeInMinutes;
     private Boolean allowEarlyCheckIn;
     private Long allowedEarlyCheckInMinutes; //this should be above the recommendedCheckIn time.
-    private NotificationsConfig sendNotifications;
+    private NotificationsConfig sendStudentNotifications;
+    private Boolean enablenotificationservice;
+    private Boolean enableemailservice;
     private Boolean sendMessagesViaEmail;
-    private List<NotificationTimeDto> notificationList;
+    private ManagementService managementService;
     private Long readTimeoutInSeconds;
     private Long connectTimeoutInSeconds;
     private Set<AllowedFaculties> setOfAllowedFaculties;
@@ -46,28 +49,30 @@ public final class LibraryConfigurationProperties {
     private Boolean allowMultipleTimeExtension;
 
     @ConstructorBinding
-    public LibraryConfigurationProperties(String universityUrl, Boolean acceptingBookings, Long bookingTimeAllowedInMinutes, Long recommendedCheckInTime, Long numberOfSeats, Boolean allowTimeExtension, Long maximumTimeExtensionAllowedInMinutes, Boolean allowLateCheckIn, Long allowedLateCheckInTimeInMinutes, Boolean allowEarlyCheckIn, Long allowedEarlyCheckInMinutes, NotificationsConfig sendNotifications, List<NotificationTimeDto> notificationList, Long readTimeoutInSeconds, Long connectTimeoutInSeconds, Set<AllowedFaculties> setOfAllowedFaculties, Boolean enableSeatRandomization, Boolean allowMultipleReservations, Boolean allowAdvancedBookings, Integer maximumLimitPerDay, Boolean enableLimitPerDay, Boolean allowMultipleTimeExtension, Boolean sendMessagesViaEmail, LibrarianSeatDto librarianSeatDto) {
+    public LibraryConfigurationProperties(String universityUrl, Boolean acceptingBookings, Long bookingTimeAllowedInMinutes, Long recommendedCheckInTime, Long numberOfSeats, Boolean allowTimeExtension, Long maximumTimeExtensionAllowedInMinutes, Boolean allowLateCheckIn, Long allowedLateCheckInTimeInMinutes, Boolean allowEarlyCheckIn, Long allowedEarlyCheckInMinutes, Boolean enablenotificationservice, Boolean enableemailservice, NotificationsConfig sendStudentNotifications, ManagementService managementService, Long readTimeoutInSeconds, Long connectTimeoutInSeconds, Set<AllowedFaculties> setOfAllowedFaculties, Boolean enableSeatRandomization, Boolean allowMultipleReservations, Boolean allowAdvancedBookings, Integer maximumLimitPerDay, Boolean enableLimitPerDay, Boolean allowMultipleTimeExtension, Boolean sendMessagesViaEmail, LibrarianSeatDto librarianSeatDto) {
         this.universityUrl = universityUrl;
         this.acceptingBookings = acceptingBookings;
         this.bookingTimeAllowedInMinutes = bookingTimeAllowedInMinutes;
         this.recommendedCheckInTime = recommendedCheckInTime;
         this.numberOfSeats = numberOfSeats;
+        this.enableemailservice = enableemailservice;
+        this.enablenotificationservice = enablenotificationservice;
         this.allowTimeExtension = allowTimeExtension;
         this.maximumTimeExtensionAllowedInMinutes = maximumTimeExtensionAllowedInMinutes;
         this.allowLateCheckIn = allowLateCheckIn;
         this.allowedLateCheckInTimeInMinutes = allowedLateCheckInTimeInMinutes;
         this.allowEarlyCheckIn = allowEarlyCheckIn;
         this.allowedEarlyCheckInMinutes = allowedEarlyCheckInMinutes;
-        this.sendNotifications = sendNotifications;
+        this.sendStudentNotifications = sendStudentNotifications;
         this.sendMessagesViaEmail = sendMessagesViaEmail;
-        this.notificationList = notificationList;
-        if (seatNumbersRangeCheck()) //the seatNumbers must be within range.
+        this.managementService = managementService;
+        if (seatNumbersRangeCheck(librarianSeatDto)) //the seatNumbers must be within range.
         {
             // prevent the container from instantiating.
             throw new BeanInitializationException("Librarian seat numbers not within range");
         }
         this.librarianSeatDto = librarianSeatDto;
-        this.notificationList.sort(Comparator.comparing(NotificationTimeDto::timeLeft));
+        this.managementService.managementservicenotificationlist().sort(Comparator.comparing(NotificationTimeDto::timeLeft));
         this.readTimeoutInSeconds = readTimeoutInSeconds;
         this.connectTimeoutInSeconds = connectTimeoutInSeconds;
         this.setOfAllowedFaculties = setOfAllowedFaculties;
@@ -79,7 +84,7 @@ public final class LibraryConfigurationProperties {
         this.allowMultipleTimeExtension = allowMultipleTimeExtension;
     }
 
-    private boolean seatNumbersRangeCheck() {
+    private boolean seatNumbersRangeCheck(LibrarianSeatDto librarianSeatDto) {
         return librarianSeatDto.seatNumbers().stream().anyMatch(seatNumber -> seatNumber > numberOfSeats);
     }
 
@@ -115,6 +120,6 @@ public final class LibraryConfigurationProperties {
 
     public void setNotificationList(List<NotificationTimeDto> notificationList) {
         notificationList.sort(Comparator.comparing(NotificationTimeDto::timeLeft));
-        this.notificationList = notificationList;
+        this.managementService = new ManagementService(this.managementService.notifystudents(), notificationList);
     }
 }

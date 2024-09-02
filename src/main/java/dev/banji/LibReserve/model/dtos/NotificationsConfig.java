@@ -1,6 +1,6 @@
 package dev.banji.LibReserve.model.dtos;
 
-public record NotificationsConfig(Boolean enabled, Boolean viaWeb,
+public record NotificationsConfig(Boolean viaWeb,
                                   Boolean viaMail, String timeUpNotificationSubject,
                                   String timeUpNotificationBody, String blackListNotificationSubject,
                                   String blackListNotificationBody, String timeAlmostUpNotificationSubject,

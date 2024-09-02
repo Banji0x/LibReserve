@@ -1,80 +1,112 @@
-# the jwt key must be at least 256 bits
-# the jwt key provided here is a dummy one, and should be replaced...
-# the jwt key is to sign and also authenticate tokens....
-# TODO Replace static Jwt
-jwt:
-  key: 3s4wk395383aka893948938zd8u0499a93jz9Anb949wi3ju982n387587za832bau384l384ha7293
-  expirationTime: 120
-
-server:
-  port: 8080
-
-Spring:
+# Application configuration
+spring:
   application:
-    name:
-      LibReserve
+    name: LibReserve
 
+  # Database configuration
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+
+  # Email configuration
   mail:
     host: smtp.gmail.com
     port: 587
-    username: your-gmail-username@gmail.com
-    password: your-gmail-password
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
-      smtp:
-      auth:
-        true
-      starttls:
-        enable: true
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-  datasource:
-    generate-unique-name: false
-    name: LibReserve
+# Server configuration
+server:
+  port: ${PORT:8000}
 
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+# JWT configuration
+jwt:
+  key: ${JWT_SECRET_KEY}
+  expirationTime: ${JWT_EXPIRATION_TIME:120}
 
+# Logging configuration
 logging:
   level:
     org:
       springframework:
         security: DEBUG
 
+# Library specific configuration
 library:
   properties:
+    universityUrl: ${UNIVERSITY_URL}
     acceptingBookings: true
     bookingTimeAllowedInMinutes: 120
-    numberOfSeats: 10
+    recommendedCheckInTime: 5
+    numberOfSeats: ${NUMBER_OF_SEATS:10}
     allowTimeExtension: true
     maximumTimeExtensionAllowedInMinutes: 30
-    recommended-check-in-time: 5
     allowLateCheckIn: true
-    allowed-late-check-in-time-in-minutes: 10
+    allowedLateCheckInTimeInMinutes: 10
     allowEarlyCheckIn: true
     allowedEarlyCheckInMinutes: 5
-    sendNotifications:
-      enabled: true
-      viaWeb: true
-      viaMail: true
-      timeUpNotificationSubject: ""
-      timeUpNotificationBody: ""
-      blackListNotificationSubject: ""
-      blackListNotificationBody: ""
-      timeAlmostUpNotificationSubject: ""
-      timeAlmostUpNotificationBody: ""
-      studentKickedOutNotificationSubject: " "
-      studentKickedOutNotificationBody: ""
+    enablenotificationservice: ${ENABLE_NOTIFICATIONS_SERVICE:true}
+    enableemailservice: ${ENABLE_EMAIL_SERVICE:true}
+    sendStudentNotifications:
+      viaWeb: ${library.properties.enablenotificationservice}
+      viaMail: ${library.properties.enableemailservice}
+      timeUpNotificationSubject: "Time's up!"
+      timeUpNotificationBody: "Your booked time has ended."
+      blackListNotificationSubject: "Account Suspended"
+      blackListNotificationBody: "Your account has been suspended."
+      timeAlmostUpNotificationSubject: "Time Almost Up"
+      timeAlmostUpNotificationBody: "Your booking will end soon."
+      studentKickedOutNotificationSubject: "Booking Terminated"
+      studentKickedOutNotificationBody: "Your booking has been terminated."
     sendMessagesViaEmail: true
+    managementservice:
+      notifystudents: ${ENABLE_MANAGEMENT_NOTIFICATION_SERVICE:true}
+      managementservicenotificationlist:
+        - timeLeft: 15
+          message: "15 minutes remaining"
+        - timeLeft: 5
+          message: "5 minutes remaining"
     readTimeoutInSeconds: 10
     connectTimeoutInSeconds: 10
-    reserveLibrarianSeat: true
-    notificationList:
-      - timeLeft:
-        message:
-
+    setOfAllowedFaculties:
+      AllowedFaculties[0]:
+        name: ENGINEERING
+        departments:
+          - ELE
+          - MME
+          - MME
+      AllowedFaculties[1]:
+        name: CIS
+        departments:
+          - CSC
+          - MAC
+          - LIS
+      AllowedFaculties[2]:
+        name: ARTS
+        departments:
+          - ENG
+          - CIVIL
     enableSeatRandomization: true
-    universityUrl: https://universitywebsite.com
+    allowMultipleReservations: false
+    allowAdvancedBookings: true
+    maximumLimitPerDay: ${MAX_BOOKINGS_PER_DAY:2}
+    enableLimitPerDay: true
+    librarianSeatDto:
+      reserveLibrarianSeat: true
+      numberOfLibrarians: ${NUMBER_OF_LIBRARIANS:2}
+      seatNumbers:
+        - 2
+        - 5
+    allowMultipleTimeExtension: false

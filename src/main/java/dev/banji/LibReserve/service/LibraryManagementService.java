@@ -24,7 +24,6 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 public class LibraryManagementService {
     private final StudentReservationRepository studentReservationRepository;
     private final LibraryOccupancyQueue libraryOccupancyQueue;
-
     private final LibraryConfigurationProperties libraryConfigurationProperties;
     private final NotificationService notificationService;
 
@@ -42,12 +41,11 @@ public class LibraryManagementService {
 
                     if (intendedCheckOutTime.isAfter(LocalTime.now())) //this means that the student session is still valid...
                     {
-                        if (!libraryConfigurationProperties.getSendNotifications().enabled()) return;
-
+                        if (!libraryConfigurationProperties.getManagementService().notifystudents())
+                            return;
                         //Send notifications
-                        //
                         long remainingTimeInMinutes = abs(ChronoUnit.MINUTES.between(studentCheckInTime, intendedCheckOutTime));
-                        var notificationList = libraryConfigurationProperties.getNotificationList();
+                        var notificationList = libraryConfigurationProperties.getManagementService().managementservicenotificationlist();
 
                         notificationList.forEach(notification -> {
                             if (notification.timeLeft().equals(remainingTimeInMinutes))

@@ -6,6 +6,7 @@ import dev.banji.LibReserve.model.dtos.EmailNotificationDto.BulkEmailNotificatio
 import dev.banji.LibReserve.model.dtos.EmailNotificationDto.SingleEmailNotificationDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,7 @@ import org.springframework.validation.annotation.Validated;
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnExpression("${library.properties.sendNotifications.viaMail} or ${library.properties.sendMessagesViaEmail}")
+@ConditionalOnProperty(prefix = "library.properties", name = "enableemailservice", havingValue = "true")
 public class EmailService {
     private final JavaMailSender javaMailSender;
 

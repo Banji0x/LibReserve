@@ -52,7 +52,6 @@ public class SecurityConfig {
     //Security Filter Chain Configuration
     @Bean
     public SecurityFilterChain JWTTokenGeneratorFilterChain(HttpSecurity httpSecurity, AuthenticationEntryPoint jwtAuthenticationEntryPoint) throws Exception {
-
         return httpSecurity.securityMatcher("/api/lib-reserve/token/student", "/api/lib-reserve/token/librarian").addFilterBefore(studentAuthenticationFilter, AuthorizationFilter.class).addFilterBefore(librarianAuthenticationFilter, AuthorizationFilter.class).requestCache(cache -> cache.requestCache(nullRequestCache)).authorizeHttpRequests(auth -> {
             auth.requestMatchers("/api/lib-reserve/token/student").hasRole("STUDENT"); //authorization...
             auth.requestMatchers("/api/lib-reserve/token/librarian").hasRole("LIBRARIAN"); //authorization...
@@ -62,10 +61,14 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity, AuthenticationEntryPoint jwtAuthenticationEntryPoint) throws Exception {
-        return httpSecurity.securityMatcher("/api/lib-reserve/student/**", "/api/lib-reserve/librarian/**").authorizeHttpRequests(auth -> auth.anyRequest().authenticated()).requestCache(cache -> cache.requestCache(nullRequestCache))
-
+        return httpSecurity
+                .securityMatcher("/api/lib-reserve/student/**", "/api/lib-reserve/librarian/**")
+                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                .requestCache(cache -> cache.requestCache(nullRequestCache))
                 .csrf(AbstractHttpConfigurer::disable) //disable csrf...
-                .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt).addFilterAfter(jwtAccessTokenBlacklistAuthenticationFilter, BearerTokenAuthenticationFilter.class).sessionManagement(SecurityConfig::customize).exceptionHandling(handler -> handler.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+                .addFilterAfter(jwtAccessTokenBlacklistAuthenticationFilter, BearerTokenAuthenticationFilter.class)
+                .sessionManagement(SecurityConfig::customize).exceptionHandling(handler -> handler.authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 ).build();
     }
 
